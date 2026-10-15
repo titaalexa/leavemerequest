@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>T201 — Leave Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0c;
+    --bg-elev:#0e0e11;
+    --sidebar:#0c0c0f;
+    --card:#131317;
+    --card-hover:#18181d;
+    --border:rgba(255,255,255,0.08);
+    --border-strong:rgba(255,255,255,0.16);
+    --text:#f1f1f4;
+    --text-dim:#9a9aa4;
+    --text-faint:#65656f;
+    --accent:#2fd7a8;
+    --accent-dim:rgba(47,215,168,0.13);
+    --accent-strong:#20b98e;
+    --warn:#f0a83d;
+    --warn-dim:rgba(240,168,61,0.14);
+    --ok:#43cf8e;
+    --ok-dim:rgba(67,207,142,0.14);
+    --bad:#f0576f;
+    --bad-dim:rgba(240,87,111,0.14);
+    --radius:10px;
+    --shadow: 0 12px 32px rgba(0,0,0,0.45);
+  }
+  .light{
+    --bg:#f4f5f7;
+    --bg-elev:#ffffff;
+    --sidebar:#ffffff;
+    --card:#ffffff;
+    --card-hover:#f6f7f9;
+    --border:rgba(15,15,20,0.09);
+    --border-strong:rgba(15,15,20,0.16);
+    --text:#16161a;
+    --text-dim:#5c5c66;
+    --text-faint:#8b8b95;
+    --accent:#149e79;
+    --accent-dim:rgba(20,158,121,0.1);
+    --accent-strong:#0f8666;
+    --warn:#b3740c;
+    --warn-dim:rgba(179,116,12,0.1);
+    --ok:#1f9e64;
+    --ok-dim:rgba(31,158,100,0.1);
+    --bad:#d13a52;
+    --bad-dim:rgba(209,58,82,0.1);
+    --shadow: 0 12px 28px rgba(20,20,30,0.10);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  #root{display:flex;min-height:100vh;width:100%;}
+  a{color:inherit;text-decoration:none;}
+  button{font-family:inherit;cursor:pointer;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--border-strong);border-radius:8px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:236px;flex:none;background:var(--sidebar);border-right:1px solid var(--border);
+    display:flex;flex-direction:column;padding:18px 12px;height:100vh;position:sticky;top:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px 8px;}
+  .brand-icon{width:28px;height:28px;border-radius:8px;background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex:none;}
+  .brand-name{font-weight:800;font-size:15px;letter-spacing:0.2px;}
+  .nav-group-label{font-size:10.5px;font-weight:700;letter-spacing:0.9px;color:var(--text-faint);
+    padding:14px 10px 6px 10px;}
+  .nav-item{
+    display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:var(--text-dim);
+    font-size:13.5px;font-weight:500;cursor:pointer;margin:1px 0;position:relative;
+  }
+  .nav-item svg{flex:none;}
+  .nav-item:hover{background:var(--card-hover);color:var(--text);}
+  .nav-item.active{background:var(--accent-dim);color:var(--accent);font-weight:600;}
+  .nav-item.active::before{content:"";position:absolute;left:-12px;top:6px;bottom:6px;width:3px;
+    background:var(--accent);border-radius:0 3px 3px 0;}
+  .nav-item .lock{margin-left:auto;color:var(--text-faint);}
+  .nav-sub{padding-left:34px;}
+  .sidebar-spacer{flex:1;}
+
+  /* ---------- Topbar ---------- */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .topbar{
+    height:60px;flex:none;display:flex;align-items:center;justify-content:flex-end;gap:8px;
+    padding:0 24px;border-bottom:1px solid var(--border);background:var(--bg);position:relative;z-index:30;
+  }
+  .icon-btn{
+    width:34px;height:34px;border-radius:8px;border:1px solid transparent;background:transparent;
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;position:relative;
+  }
+  .icon-btn:hover{background:var(--card-hover);color:var(--text);border-color:var(--border);}
+  .badge-dot{
+    position:absolute;top:1px;right:1px;background:var(--bad);color:#fff;font-size:9px;font-weight:700;
+    border-radius:8px;padding:1px 4px;line-height:1.3;border:2px solid var(--bg);
+  }
+  .avatar{
+    width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;color:#0a0a0c;flex:none;
+  }
+  .role-pill{
+    display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:999px;
+    background:var(--card);border:1px solid var(--border-strong);color:var(--text);font-size:13px;font-weight:600;
+  }
+  .role-pill:hover{border-color:var(--accent);}
+  .role-pill .role-avatar{width:22px;height:22px;border-radius:50%;background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex:none;}
+  .role-pill .role-tag{font-size:10px;font-weight:700;letter-spacing:0.4px;color:var(--text-faint);
+    text-transform:uppercase;display:block;line-height:1.3;}
+  .role-pill .role-value{display:block;line-height:1.3;}
+  .role-pill-wrap{position:relative;}
+  .role-menu{
+    position:absolute;top:calc(100% + 8px);right:0;width:250px;background:var(--card);
+    border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);padding:6px;z-index:50;
+  }
+  .role-menu-label{font-size:10.5px;font-weight:700;color:var(--text-faint);letter-spacing:0.6px;padding:8px 10px 4px;}
+  .role-opt{
+    display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;color:var(--text);
+  }
+  .role-opt:hover{background:var(--card-hover);}
+  .role-opt.selected{background:var(--accent-dim);}
+  .role-opt-icon{width:30px;height:30px;border-radius:8px;background:var(--bg-elev);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;flex:none;color:var(--text-dim);}
+  .role-opt.selected .role-opt-icon{color:var(--accent);border-color:var(--accent);background:var(--accent-dim);}
+  .role-opt-main{flex:1;min-width:0;}
+  .role-opt-title{font-size:13px;font-weight:600;}
+  .role-opt-sub{font-size:11.5px;color:var(--text-faint);}
+  .role-opt-check{color:var(--accent);flex:none;}
+  .notif-panel{
+    position:absolute;top:calc(100% + 8px);right:0;width:320px;background:var(--card);
+    border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);z-index:50;overflow:hidden;
+  }
+  .notif-head{padding:13px 15px;border-bottom:1px solid var(--border);font-weight:700;font-size:13.5px;}
+  .notif-item{padding:11px 15px;border-bottom:1px solid var(--border);display:flex;gap:10px;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:6px;flex:none;}
+  .notif-text{font-size:12.5px;color:var(--text-dim);line-height:1.5;}
+  .notif-text b{color:var(--text);font-weight:600;}
+  .notif-time{font-size:11px;color:var(--text-faint);margin-top:2px;}
+
+  /* ---------- Content ---------- */
+  .content{flex:1;overflow-y:auto;padding:28px 32px 60px;}
+  .page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:20px;flex-wrap:wrap;}
+  .crumb{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-faint);margin-bottom:8px;}
+  .crumb .crumb-link{color:var(--text-dim);cursor:pointer;}
+  .crumb .crumb-link:hover{color:var(--accent);}
+  h1.page-title{font-size:24px;font-weight:800;margin:0 0 6px;letter-spacing:-0.3px;}
+  .page-sub{color:var(--text-faint);font-size:13.5px;margin:0;}
+  .btn{
+    display:inline-flex;align-items:center;gap:7px;border-radius:9px;padding:9px 16px;font-size:13.5px;
+    font-weight:600;border:1px solid transparent;white-space:nowrap;
+  }
+  .btn-accent{background:var(--accent);color:#08201a;}
+  .btn-accent:hover{background:var(--accent-strong);}
+  .btn-ghost{background:var(--card);border-color:var(--border-strong);color:var(--text);}
+  .btn-ghost:hover{background:var(--card-hover);}
+  .btn-sm{padding:6px 12px;font-size:12.5px;border-radius:7px;}
+  .btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+  /* widgets */
+  .widgets{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px;}
+  .widget{
+    background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px 18px;
+    cursor:pointer;transition:border-color .12s;
+  }
+  .widget:hover{border-color:var(--border-strong);}
+  .widget.selected{border-color:var(--accent);}
+  .widget.w-pending{background:var(--warn-dim);border-color:rgba(240,168,61,0.28);}
+  .widget.w-pending .widget-value{color:var(--warn);}
+  .widget.w-pending.selected{border-color:var(--warn);}
+  .widget.w-approved{background:var(--ok-dim);border-color:rgba(67,207,142,0.28);}
+  .widget.w-approved .widget-value{color:var(--ok);}
+  .widget.w-approved.selected{border-color:var(--ok);}
+  .widget.w-rejected{background:var(--bad-dim);border-color:rgba(240,87,111,0.28);}
+  .widget.w-rejected .widget-value{color:var(--bad);}
+  .widget.w-rejected.selected{border-color:var(--bad);}
+  .widget.w-cancelled.selected{border-color:var(--text-dim);}
+  .widget-label{font-size:10.5px;font-weight:700;letter-spacing:0.7px;color:var(--text-faint);margin-bottom:10px;
+    display:flex;align-items:center;gap:7px;}
+  .widget-label .dot{width:8px;height:8px;border-radius:50%;}
+  .widget-value{font-size:28px;font-weight:800;letter-spacing:-0.5px;}
+  .widget-note{font-size:11.5px;color:var(--text-faint);margin-top:4px;}
+
+  /* filters */
+  .filter-bar{display:flex;gap:10px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap;}
+  .search-box{
+    flex:1;min-width:220px;display:flex;align-items:center;gap:8px;background:var(--card);
+    border:1px solid var(--border-strong);border-radius:9px;padding:8px 12px;color:var(--text-faint);
+  }
+  .search-box input{border:none;background:transparent;outline:none;color:var(--text);font-size:13.5px;width:100%;
+    font-family:inherit;}
+  select.filter-select, input.filter-date{
+    background:var(--card);border:1px solid var(--border-strong);color:var(--text);border-radius:9px;
+    padding:8px 10px;font-size:13px;font-family:inherit;min-width:130px;
+  }
+  input.filter-date{color-scheme:dark;width:100%;}
+  .light input.filter-date{color-scheme:light;}
+  .date-field{display:flex;flex-direction:column;gap:4px;min-width:150px;}
+  .date-field-label{font-size:10px;font-weight:700;letter-spacing:0.5px;color:var(--text-faint);
+    text-transform:uppercase;padding-left:1px;}
+  .clear-btn{color:var(--text-faint);font-size:12.5px;font-weight:600;padding:8px 4px;white-space:nowrap;
+    align-self:flex-end;}
+  .clear-btn:hover{color:var(--accent);}
+
+  /* table */
+  .table-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  thead th{
+    text-align:left;font-size:10.5px;font-weight:700;letter-spacing:0.6px;color:var(--text-faint);
+    padding:12px 16px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg-elev);
+  }
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:var(--card-hover);}
+  .emp-cell{cursor:pointer;}
+  .emp-name{font-weight:600;color:var(--text);}
+  .emp-name:hover{color:var(--accent);}
+  .emp-dept{font-size:11.5px;color:var(--text-faint);margin-top:1px;}
+  .name-row{display:flex;align-items:center;gap:10px;}
+  .mini-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:700;color:#08110d;flex:none;}
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;font-size:11.5px;font-weight:700;}
+  .badge.pending{background:var(--warn-dim);color:var(--warn);}
+  .badge.approved{background:var(--ok-dim);color:var(--ok);}
+  .badge.rejected{background:var(--bad-dim);color:var(--bad);}
+  .badge.cancelled{background:rgba(154,154,164,0.16);color:var(--text-dim);}
+  .link-btn{color:var(--accent);font-weight:600;font-size:12.5px;}
+  .link-btn:hover{text-decoration:underline;}
+  .muted{color:var(--text-faint);}
+  .table-foot{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+    border-top:1px solid var(--border);font-size:12px;color:var(--text-faint);}
+  .foot-controls{display:flex;align-items:center;gap:10px;}
+  .page-btn{width:26px;height:26px;border-radius:6px;background:var(--bg-elev);border:1px solid var(--border);
+    display:flex;align-items:center;justify-content:center;color:var(--text-dim);}
+  .empty-state{padding:60px 20px;text-align:center;color:var(--text-faint);}
+  .empty-state svg{margin-bottom:12px;color:var(--text-faint);}
+  .empty-state .empty-title{color:var(--text-dim);font-weight:600;font-size:14px;margin-bottom:4px;}
+
+  /* tabs */
+  .tabbar{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;}
+  .tab{padding:10px 16px;font-size:13.5px;font-weight:600;color:var(--text-faint);border-bottom:2px solid transparent;
+    cursor:pointer;display:flex;align-items:center;gap:6px;}
+  .tab:hover{color:var(--text);}
+  .tab.active{color:var(--text);border-bottom-color:var(--accent);}
+  .tab.disabled{opacity:0.4;cursor:not-allowed;}
+  .tab-count{background:var(--bg-elev);border:1px solid var(--border);color:var(--text-faint);font-size:10.5px;
+    padding:1px 6px;border-radius:8px;}
+  .subtabs{display:flex;gap:8px;margin-bottom:16px;}
+  .subtab{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--text-dim);
+    background:var(--card);border:1px solid var(--border);}
+  .subtab.active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+
+  /* profile */
+  .profile-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+    padding:22px;margin-bottom:20px;}
+  .profile-top{display:flex;align-items:center;gap:16px;}
+  .profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:19px;font-weight:800;color:#08110d;flex:none;}
+  .profile-name{font-size:18px;font-weight:800;}
+  .status-chip{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:var(--warn-dim);
+    color:var(--warn);margin-left:8px;vertical-align:middle;}
+  .status-chip.regular{background:var(--ok-dim);color:var(--ok);}
+  .profile-title{color:var(--text-faint);font-size:13px;margin-top:3px;}
+  .profile-tabbar{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:18px -22px -22px;padding:0 22px;}
+  .ptab{padding:11px 14px;font-size:13px;color:var(--text-faint);border-bottom:2px solid transparent;font-weight:600;}
+  .ptab.active{color:var(--text);border-bottom-color:var(--accent);}
+  .ptab.inert{cursor:default;}
+
+  .balance-note{font-size:11.5px;color:var(--text-faint);padding:12px 16px;border-top:1px solid var(--border);}
+  .total-row td{background:var(--bg-elev);font-weight:800;border-top:1px solid var(--border-strong);}
+  .total-row td:first-child{color:var(--text);}
+  .leave-type-cell{display:flex;align-items:center;gap:11px;}
+  .leave-progress-icon{width:32px;height:32px;border-radius:50%;background:var(--accent-dim);color:var(--accent);
+    display:flex;align-items:center;justify-content:center;flex:none;}
+  .leave-progress-icon-sm{width:28px;height:28px;}
+  .mini-progress-wrap{position:relative;display:inline-block;min-width:90px;}
+  .mini-progress-wrap-cell{min-width:56px;}
+  .mini-progress-track{height:5px;border-radius:3px;background:var(--border-strong);overflow:hidden;margin-top:6px;width:90px;}
+  .mini-progress-wrap-cell .mini-progress-track{width:56px;}
+  .mini-progress-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .2s;}
+  .mini-progress-tooltip{
+    position:absolute;bottom:100%;left:0;margin-bottom:8px;
+    background:var(--bg-elev);border:1px solid var(--border-strong);color:var(--text);
+    font-size:11.5px;font-weight:600;padding:7px 11px;border-radius:8px;white-space:nowrap;
+    opacity:0;pointer-events:none;transition:opacity .12s;box-shadow:var(--shadow);z-index:5;
+  }
+  .mini-progress-wrap:hover .mini-progress-tooltip{opacity:1;}
+  .avail-badge{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:23px;
+    padding:0 9px;border-radius:999px;background:var(--accent-dim);color:var(--accent);font-weight:700;font-size:12.5px;}
+
+  .field-error{color:var(--bad);font-size:12px;font-weight:600;margin-top:6px;}
+  .notif-panel{max-height:440px;overflow-y:auto;}
+  .notif-head{display:flex;justify-content:space-between;align-items:center;}
+  .notif-markall{font-size:11.5px;color:var(--accent);cursor:pointer;font-weight:600;}
+  .notif-item{cursor:pointer;}
+  .notif-item:hover{background:var(--card-hover);}
+  .notif-empty{padding:18px 15px;font-size:12.5px;color:var(--text-faint);}
+  /* adjust balance */
+  .adj-pos{color:var(--accent);font-weight:800;}
+  .adj-neg{color:var(--bad);font-weight:800;}
+  .adj-hist-title{font-size:13px;font-weight:800;margin:22px 0 10px;}
+  .adj-hist td.reason{white-space:normal;max-width:300px;color:var(--text-dim);}
+  .adj-hint{font-size:12px;color:var(--text-faint);margin-top:6px;}
+  /* balance import (CSV / Excel sync) */
+  .modal.modal-xl{width:920px;}
+  .filter-bar .import-btn{margin-left:auto;flex:none;white-space:nowrap;}
+  .sync-note{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:14px;}
+  .sync-note svg{flex:none;color:var(--accent);}
+  .imp-rule{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin:0 0 14px;}
+  .imp-rule b{color:var(--text);}
+  .imp-sample{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;}
+  .imp-sample th,.imp-sample td{border:1px solid var(--border);padding:6px 10px;text-align:left;}
+  .imp-sample th{color:var(--text-faint);font-weight:700;background:var(--bg-elev);}
+  .imp-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .imp-chip{font-size:12px;font-weight:700;padding:5px 11px;border-radius:999px;background:var(--bg-elev);border:1px solid var(--border);color:var(--text-dim);}
+  .imp-chip.ok{background:var(--accent-dim);color:var(--accent);border-color:transparent;}
+  .imp-chip.bad{background:var(--bad-dim);color:var(--bad);border-color:transparent;}
+  .imp-chip.warn{background:var(--warn-dim);color:var(--warn);border-color:transparent;}
+  .imp-wrap{max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:10px;}
+  .imp-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  .imp-table th{position:sticky;top:0;background:var(--bg-elev);text-align:left;padding:9px 12px;font-size:11px;letter-spacing:.04em;color:var(--text-faint);text-transform:uppercase;border-bottom:1px solid var(--border);white-space:nowrap;}
+  .imp-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;white-space:nowrap;}
+  .imp-table tr:last-child td{border-bottom:none;}
+  .imp-table .reason{display:block;white-space:normal;font-size:11.5px;color:var(--text-faint);margin-top:3px;max-width:230px;}
+  .imp-pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:700;}
+  .imp-pill.ok{background:var(--accent-dim);color:var(--accent);}
+  .imp-pill.same{background:var(--bg-elev);color:var(--text-faint);border:1px solid var(--border);}
+  .imp-pill.warn{background:var(--warn-dim);color:var(--warn);}
+  .imp-pill.bad{background:var(--bad-dim);color:var(--bad);}
+  .imp-old{color:var(--text-faint);text-decoration:line-through;margin-right:5px;}
+  .imp-new{color:var(--accent);font-weight:800;}
+  .imp-dim{color:var(--text-faint);}
+  /* balance drawer (right side) */
+  .head-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .drawer-overlay{position:fixed;inset:0;background:rgba(4,4,6,0.55);backdrop-filter:blur(2px);z-index:90;display:flex;justify-content:flex-end;}
+  .drawer{background:var(--card);border-left:1px solid var(--border-strong);width:min(720px,100vw);height:100%;display:flex;flex-direction:column;box-shadow:var(--shadow);}
+  .drawer.drawer-wide{width:min(980px,100vw);}
+  .drawer-head{position:relative;padding:18px 52px 14px 22px;border-bottom:1px solid var(--border);}
+  .drawer-title{font-size:17px;font-weight:800;}
+  .drawer-sub{font-size:12.5px;color:var(--text-faint);margin-top:5px;line-height:1.4;}
+  .drawer-close{position:absolute;top:18px;right:18px;color:var(--text-faint);cursor:pointer;}
+  .drawer-close:hover{color:var(--text);}
+  .drawer-body{flex:1;overflow-y:auto;padding:18px 22px 24px;}
+  .drawer-body .table-card{overflow-x:auto;}
+  .drawer-body .filter-bar{margin-bottom:14px;}
+  .seg{display:inline-flex;gap:2px;margin-top:14px;padding:3px;background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;}
+  .seg-btn{padding:6px 14px;font-size:12.5px;font-weight:700;color:var(--text-dim);border-radius:8px;cursor:pointer;user-select:none;}
+  .seg-btn:hover{color:var(--text);}
+  .seg-btn.active{background:var(--accent-dim);color:var(--accent);}
+  .drawer-overlay.anim{animation:drawerFade .2s ease;}
+  .drawer-overlay.anim .drawer{animation:drawerSlide .26s cubic-bezier(.2,.8,.2,1);}
+  @keyframes drawerFade{from{opacity:0}to{opacity:1}}
+  @keyframes drawerSlide{from{transform:translateX(100%)}to{transform:translateX(0)}}
+
+  /* modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(4,4,6,0.6);backdrop-filter:blur(2px);
+    display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+  .modal{background:var(--card);border:1px solid var(--border-strong);border-radius:14px;width:480px;
+    max-width:100%;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow);}
+  .modal.modal-wide{width:620px;}
+  .modal-head{position:relative;padding:18px 46px 18px 20px;border-bottom:1px solid var(--border);}
+  .modal-title{font-size:17px;font-weight:800;}
+  .modal-subtitle{font-size:12.5px;color:var(--text-faint);margin-top:5px;line-height:1.4;}
+  .modal-close{position:absolute;top:18px;right:18px;color:var(--text-faint);}
+  .modal-close:hover{color:var(--text);}
+  .modal-body{padding:20px;}
+  .modal-foot{padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+  .detail-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-label{color:var(--text-faint);}
+  .detail-value{font-weight:600;text-align:right;}
+  .form-group{margin-bottom:16px;}
+  .form-label{display:block;font-size:12.5px;font-weight:600;color:var(--text-dim);margin-bottom:6px;}
+  .form-input,.form-select,.form-textarea{
+    width:100%;background:var(--bg-elev);border:1px solid var(--border-strong);border-radius:9px;
+    padding:9px 11px;color:var(--text);font-size:13.5px;font-family:inherit;
+  }
+  .form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--accent);}
+  .form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-dim);}
+  .form-textarea{resize:vertical;min-height:70px;}
+  .input-error{border-color:var(--bad) !important;box-shadow:0 0 0 3px var(--bad-dim);}
+  .form-row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .date-input-wrap{position:relative;}
+  .date-input-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-faint);pointer-events:none;}
+  .date-input-wrap input[type="date"]{padding-left:34px;}
+  .avail-box{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;padding:9px 11px;
+    font-size:12.5px;color:var(--text-dim);min-height:38px;display:flex;align-items:center;
+  }
+  .avail-box b{color:var(--accent);font-weight:700;}
+  .dropzone{
+    border:1.5px dashed var(--border-strong);border-radius:10px;padding:22px 16px;text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:9px;transition:border-color .12s,background .12s;
+  }
+  .dropzone.drag-over{border-color:var(--accent);background:var(--accent-dim);}
+  .dropzone-text{font-size:12.5px;color:var(--text-faint);}
+  .dropzone-hint{font-size:11px;color:var(--text-faint);}
+  .dropzone-filename{font-size:12px;color:var(--accent);font-weight:600;}
+  .toast{
+    position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--card);
+    border:1px solid var(--accent);color:var(--text);padding:12px 20px;border-radius:10px;font-size:13.5px;
+    font-weight:600;box-shadow:var(--shadow);z-index:200;display:flex;align-items:center;gap:9px;
+  }
+  .scope-note{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);
+    border-radius:9px;padding:10px 14px;font-size:12.5px;color:var(--text-dim);margin-bottom:18px;}
+  .scope-note svg{color:var(--accent);flex:none;}
+
+  .date-add-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .date-add-row .form-input{flex:1;min-width:0;}
+  .date-add-label{width:84px;flex:none;font-size:12px;color:var(--text-faint);font-weight:600;}
+  .chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 8px;padding:2px;border-radius:9px;}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border-radius:999px;font-size:12px;font-weight:600;background:var(--accent-dim);color:var(--accent);}
+  .chip.chip-holiday{background:var(--warn-dim);color:var(--warn);text-decoration:none;}
+  .chip-x{cursor:pointer;width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:13px;line-height:1;}
+  .chip-x:hover{background:var(--border-strong);}
+  .date-summary{background:var(--bg-elev);border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-size:12.5px;color:var(--text-dim);}
+  .date-summary b{color:var(--accent);}
+  .date-hint{font-size:11px;color:var(--text-faint);margin-top:6px;}
+
+  .date-field{position:relative;}
+  .date-btn{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border-strong);border-radius:9px;padding:8px 10px;font-size:13px;color:var(--text-faint);cursor:pointer;min-width:150px;}
+  .date-btn.has{color:var(--text);} .date-btn:hover{background:var(--card-hover);}
+  .date-clear{margin-left:auto;font-size:15px;line-height:1;padding:0 2px;color:var(--text-faint);}
+  .cal-pop{position:absolute;top:100%;left:0;margin-top:6px;z-index:60;background:var(--card);border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);padding:10px;}
+  .cal-wrap{margin-top:8px;display:block;width:100%;}
+  /* File Leave calendar fills the full width of the form; filter popups keep the compact .cal size */
+  .cal-wrap .cal{width:100%;padding:14px 16px 12px;border:1px solid var(--border);border-radius:12px;background:var(--bg-elev);}
+  .cal-wrap .cal-head{font-size:14px;margin-bottom:10px;}
+  .cal-wrap .cal-grid{gap:4px;}
+  .cal-wrap .cal-dow{font-size:11.5px;padding:5px 0;}
+  .cal-wrap .cal-day{height:42px;font-size:14px;}
+  .cal-wrap .cal-legend{margin-top:10px;font-size:11.5px;}
+  .cal{width:252px;}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;font-size:13px;margin-bottom:6px;}
+  .cal-nav{cursor:pointer;width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;font-size:16px;}
+  .cal-nav:hover{background:var(--card-hover);}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .cal-dow{font-size:10.5px;color:var(--text-faint);text-align:center;padding:3px 0;}
+  .cal-day{height:32px;display:flex;align-items:center;justify-content:center;font-size:12.5px;border-radius:8px;cursor:pointer;border:1px solid transparent;}
+  .cal-day:hover{background:var(--card-hover);border-color:var(--border-strong);}
+  .cal-empty{cursor:default;pointer-events:none;}
+  .cal-today{border-color:var(--border-strong);font-weight:700;}
+  .cal-hol{background:var(--warn-dim);color:var(--warn);}
+  .cal-weekend{color:var(--text-faint);}
+  .cal-sel{background:var(--accent);color:#06251d;font-weight:700;}
+  .cal-start{outline:2px solid var(--accent);outline-offset:1px;}
+  .cal-modes{display:flex;gap:6px;margin-top:6px;}
+  .cal-modes .active{background:var(--accent-dim);color:var(--accent);border-color:var(--accent);}
+  .cal-legend{font-size:11px;color:var(--text-faint);margin-top:8px;}
+
+  .dr-pop{position:absolute;top:100%;right:0;margin-top:6px;z-index:60;display:flex;background:var(--card);
+    border:1px solid var(--border-strong);border-radius:12px;box-shadow:var(--shadow);}
+  .dr-quick{width:160px;padding:12px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:2px;}
+  .dr-quick-label{font-size:10.5px;font-weight:700;letter-spacing:0.7px;color:var(--text-faint);padding:4px 8px 8px;}
+  .dr-quick-item{padding:9px 10px;border-radius:8px;font-size:13px;font-weight:500;color:var(--text);cursor:pointer;}
+  .dr-quick-item:hover{background:var(--card-hover);}
+  .dr-quick-item.active{background:var(--accent-dim);color:var(--accent);font-weight:600;}
+  .dr-quick-note{font-size:11px;color:var(--text-faint);padding:12px 8px 0;}
+  .dr-main{padding:14px 16px 12px;}
+  .dr-months{display:flex;gap:28px;}
+  .dr-month{width:252px;}
+  .dr-head{display:flex;align-items:center;justify-content:space-between;height:28px;margin-bottom:8px;font-size:13px;}
+  .dr-head b{flex:1;text-align:center;}
+  .dr-nav{width:28px;height:28px;border-radius:7px;border:1px solid var(--border-strong);background:var(--bg-elev);
+    color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;}
+  .dr-nav.hidden{visibility:hidden;}
+  .dr-foot{display:flex;justify-content:flex-end;gap:8px;border-top:1px solid var(--border);margin-top:10px;padding-top:12px;}
+  .cal-inrange{background:var(--accent-dim);border-radius:0;}
+  /* keep the filter bar on one line */
+  .filter-bar{flex-wrap:nowrap;}
+  .search-box{min-width:130px;}
+  select.filter-select{min-width:0;}
+  .date-field{min-width:0;}
+  .date-btn{min-width:140px;white-space:nowrap;}
+  .clear-btn{flex:none;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+/* ============================= ICONS ============================= */
+function ic(name, size){
+  size = size || 18;
+  const map = {
+    grid:'<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/>',
+    message:'<path d="M21 11.5a8.38 8.38 0 0 1-4.8 7.6 8.5 8.5 0 0 1-9.4-1.2L3 21l1.9-4.2A8.38 8.38 0 0 1 3 12.5 8.5 8.5 0 0 1 12 4a8.5 8.5 0 0 1 9 7.5z"/>',
+    clock:'<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>',
+    users:'<path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="9" cy="8" r="3.2"/><path d="M20.5 20v-1.5a3.5 3.5 0 0 0-2.5-3.35"/><path d="M14.5 4.2a3.2 3.2 0 0 1 0 6.1"/>',
+    clipboard:'<rect x="4.5" y="4" width="15" height="17" rx="2"/><path d="M9 2.5h6a1 1 0 0 1 1 1V6H8V3.5a1 1 0 0 1 1-1z"/><line x1="8.5" y1="11" x2="15.5" y2="11"/><line x1="8.5" y1="15" x2="13.5" y2="15"/>',
+    shield:'<path d="M12 21.5S4.5 17.7 4.5 11.2V5.4L12 2.5l7.5 2.9v5.8C19.5 17.7 12 21.5 12 21.5z"/>',
+    alert:'<path d="M10.4 3.7 2.2 18a1.9 1.9 0 0 0 1.6 2.8h16.4a1.9 1.9 0 0 0 1.6-2.8L13.6 3.7a1.9 1.9 0 0 0-3.2 0z"/><line x1="12" y1="9.2" x2="12" y2="13.2"/><circle cx="12" cy="16.5" r="0.9" fill="currentColor" stroke="none"/>',
+    hourglass:'<path d="M6 2.5h12M6 21.5h12M7 2.5c0 5 5 6.5 5 9.5s-5 4.5-5 9.5M17 2.5c0 5-5 6.5-5 9.5s5 4.5 5 9.5"/>',
+    leaf:'<path d="M4.5 19.5c-1-6.5 2-14 15-16-1.5 12.5-9 15.5-15 16z"/><path d="M5 19c3-3 6-6.5 8-11"/>',
+    calendar:'<rect x="3.5" y="4.5" width="17" height="16" rx="2"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="8" y1="2.5" x2="8" y2="6.5"/><line x1="16" y1="2.5" x2="16" y2="6.5"/>',
+    briefcase:'<rect x="2.5" y="7" width="19" height="13" rx="2"/><path d="M8 7V5.5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2V7"/><line x1="2.5" y1="12.5" x2="21.5" y2="12.5"/>',
+    file:'<path d="M6 2.5h8l4.5 4.5V20a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 20V4A1.5 1.5 0 0 1 6 2.5z"/><path d="M14 2.5V7h4.5"/>',
+    activity:'<polyline points="3 12 7.5 12 10 18 14 6 16.5 12 21 12"/>',
+    wallet:'<rect x="2.5" y="6" width="19" height="13.5" rx="2.2"/><path d="M2.5 10h19"/><circle cx="17.3" cy="14.2" r="1.1" fill="currentColor" stroke="none"/>',
+    search:'<circle cx="10.5" cy="10.5" r="6.5"/><line x1="19.5" y1="19.5" x2="15.3" y2="15.3"/>',
+    bell:'<path d="M12 3a5.5 5.5 0 0 0-5.5 5.5c0 5.2-2 6.5-2 7.5h15c0-1-2-2.3-2-7.5A5.5 5.5 0 0 0 12 3z"/><path d="M9.7 19a2.3 2.3 0 0 0 4.6 0"/>',
+    moon:'<path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a6.8 6.8 0 0 0 10.2 10.2z"/>',
+    sun:'<circle cx="12" cy="12" r="4.5"/><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="4.2" y1="4.2" x2="6" y2="6"/><line x1="18" y1="18" x2="19.8" y2="19.8"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="4.2" y1="19.8" x2="6" y2="18"/><line x1="18" y1="6" x2="19.8" y2="4.2"/>',
+    chevronDown:'<polyline points="6 9 12 15 18 9"/>',
+    arrowLeft:'<line x1="19" y1="12" x2="5" y2="12"/><polyline points="11 6 5 12 11 18"/>',
+    x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+    check:'<polyline points="20 6 9 17 4 12"/>',
+    plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+    lock:'<rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
+    eye:'<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    info:'<circle cx="12" cy="12" r="9.5"/><line x1="12" y1="11" x2="12" y2="16.5"/><circle cx="12" cy="7.7" r="1" fill="currentColor" stroke="none"/>',
+    building:'<rect x="4" y="2.5" width="16" height="19" rx="1.5"/><line x1="8" y1="7" x2="8" y2="7.01"/><line x1="12" y1="7" x2="12" y2="7.01"/><line x1="16" y1="7" x2="16" y2="7.01"/><line x1="8" y1="11" x2="8" y2="11.01"/><line x1="12" y1="11" x2="12" y2="11.01"/><line x1="16" y1="11" x2="16" y2="11.01"/><line x1="8" y1="15" x2="8" y2="15.01"/><line x1="12" y1="15" x2="12" y2="15.01"/><line x1="16" y1="15" x2="16" y2="15.01"/>',
+    upload:'<path d="M12 4v11"/><polyline points="7.5 8.5 12 4 16.5 8.5"/><path d="M4.5 16.5v2.5a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-2.5"/>',
+    download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    heart:'<path d="M12 20.3s-7.3-4.5-9.6-8.8A5.3 5.3 0 0 1 12 6.2a5.3 5.3 0 0 1 9.6 5.3c-2.3 4.3-9.6 8.8-9.6 8.8z"/>',
+    gift:'<rect x="3.5" y="9" width="17" height="11" rx="1.3"/><path d="M3 8.7h18v3.3H3z"/><line x1="12" y1="8.7" x2="12" y2="20"/><path d="M12 8.7c-1-2.7-3-3.7-4.3-3.1-1.3.6-1.2 2.2.2 3.1z"/><path d="M12 8.7c1-2.7 3-3.7 4.3-3.1 1.3.6 1.2 2.2-.2 3.1z"/>'
+  };
+  return '<svg width="'+size+'" height="'+size+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(map[name]||'')+'</svg>';
+}
+
+/* ============================= DATA ============================= */
+const LEAVE_TYPES = ['Vacation','Sick','Emergency','Bereavement','Birthday'];
+const TYPE_ICON = {Vacation:'leaf', Sick:'heart', Emergency:'shield', Bereavement:'users', Birthday:'gift'};
+
+const EMPLOYEES = [
+  {id:'emp-jhumel',   name:'Jhumel Tapia',    dept:'Engineering',        team:'Engineering Team', title:'Frontend Engineer',               status:'Regular',      color:'#5b8def'},
+  {id:'emp-johnpaul', name:'John Paul Romez', dept:'Engineering',        team:'Engineering Team', title:'Backend Engineer',                status:'Regular',      color:'#e08a3c'},
+  {id:'emp-miguel',   name:'Miguel Santos',   dept:'Engineering',        team:'Engineering Team', title:'DevOps Engineer',                 status:'Regular',      color:'#9163e0'},
+  {id:'emp-nico',     name:'Nico Fernandez',  dept:'Engineering',        team:'Engineering Team', title:'Associate Engineer',              status:'Probationary', color:'#3cae6b'},
+  {id:'emp-meinard',  name:'Meinard Job Ga',  dept:'Design',             team:'Design Team',      title:'Product Designer',                status:'Regular',      color:'#e05c7a'},
+  {id:'emp-andrea',   name:'Andrea Lim',      dept:'Design',             team:'Design Team',      title:'UX Researcher',                   status:'Regular',      color:'#3cc7d6'},
+  {id:'emp-ja',       name:'Ja Espinoza',     dept:'Quality Assurance',  team:'QA Team',          title:'QA Analyst',                      status:'Regular',      color:'#d6a13c'},
+  {id:'emp-pauladmin',name:'Paul Admin',      dept:'Quality Assurance',  team:'QA Team',          title:'Software Quality Assurance Engineer', status:'Probationary', color:'#3cd6a8'},
+  {id:'emp-carlo',    name:'Carlo Reyes',     dept:'Quality Assurance',  team:'QA Team',          title:'QA Engineer',                     status:'Regular',      color:'#d65c5c'},
+  {id:'emp-ecia',     name:'Ecia Benosa',     dept:'Human Resources',    team:'People Team',      title:'HR Generalist',                   status:'Regular',      color:'#9c8ef0'},
+  {id:'emp-divine',   name:'Divine Aquino',   dept:'Human Resources',    team:'People Team',      title:'Talent Acquisition Specialist',   status:'Regular',      color:'#f0a83d'},
+  {id:'emp-bea',      name:'Bea Cruz',        dept:'Finance',            team:'Finance Team',     title:'Payroll Officer',                 status:'Regular',      color:'#6bd63c'},
+  {id:'emp-paulmgr',  name:'Paul Manager',    dept:'Engineering',        team:'Engineering Team', title:'Engineering Manager',             status:'Regular',      color:'#4a90d9'},
+  {id:'emp-eliakim',  name:'Eliakim Toluan',  dept:'Quality Assurance',  team:'QA Team',          title:'QA Supervisor',                   status:'Regular',      color:'#d98a4a'},
+  {id:'emp-beaadmin', name:'Bea Super Admin', dept:'Administration',     team:'Admin Team',       title:'Super Administrator',              status:'Regular',      color:'#9c4ad9'},
+];
+
+const REQUESTS = [
+  {id:'r1',  employeeId:'emp-johnpaul', leaveType:'Vacation',    start:'2026-09-22', end:'2026-09-24', days:3, filed:'2026-09-15', status:'Pending'},
+  {id:'r2',  employeeId:'emp-jhumel',   leaveType:'Sick',        start:'2026-09-16', end:'2026-09-16', days:1, filed:'2026-09-15', status:'Pending'},
+  {id:'r3',  employeeId:'emp-meinard',  leaveType:'Vacation',    start:'2026-09-20', end:'2026-09-21', days:2, filed:'2026-09-14', status:'Pending'},
+  {id:'r4',  employeeId:'emp-ja',       leaveType:'Emergency',   start:'2026-09-18', end:'2026-09-18', days:1, filed:'2026-09-14', status:'Pending'},
+  {id:'r5',  employeeId:'emp-pauladmin',leaveType:'Bereavement', start:'2026-09-17', end:'2026-09-19', days:3, filed:'2026-09-14', status:'Pending'},
+  {id:'r6',  employeeId:'emp-carlo',    leaveType:'Vacation',    start:'2026-09-25', end:'2026-09-26', days:2, filed:'2026-09-13', status:'Approved'},
+  {id:'r7',  employeeId:'emp-miguel',   leaveType:'Sick',        start:'2026-09-10', end:'2026-09-10', days:1, filed:'2026-09-09', status:'Approved'},
+  {id:'r8',  employeeId:'emp-nico',     leaveType:'Vacation',    start:'2026-08-30', end:'2026-08-31', days:2, filed:'2026-08-25', status:'Rejected', rejectReason:'Team is short-staffed that week due to two other approved Vacation requests; please refile for a later date.'},
+  {id:'r9',  employeeId:'emp-ecia',     leaveType:'Birthday',    start:'2026-10-03', end:'2026-10-03', days:1, filed:'2026-09-12', status:'Pending'},
+  {id:'r10', employeeId:'emp-divine',   leaveType:'Vacation',    start:'2026-09-28', end:'2026-09-30', days:3, filed:'2026-09-11', status:'Approved'},
+  {id:'r11', employeeId:'emp-bea',      leaveType:'Sick',        start:'2026-09-08', end:'2026-09-08', days:1, filed:'2026-09-07', status:'Approved'},
+  {id:'r12', employeeId:'emp-andrea',   leaveType:'Emergency',   start:'2026-09-05', end:'2026-09-05', days:1, filed:'2026-09-04', status:'Rejected', rejectReason:'Emergency leave requires supporting documentation, which was not attached to this request.'},
+  {id:'r13', employeeId:'emp-johnpaul', leaveType:'Sick',        start:'2026-08-20', end:'2026-08-20', days:1, filed:'2026-08-19', status:'Approved'},
+  {id:'r14', employeeId:'emp-jhumel',   leaveType:'Vacation',    start:'2026-07-14', end:'2026-07-15', days:2, filed:'2026-07-10', status:'Approved'},
+  {id:'r15', employeeId:'emp-pauladmin',leaveType:'Vacation',    start:'2026-07-01', end:'2026-07-02', days:2, filed:'2026-06-28', status:'Approved'},
+  {id:'r16', employeeId:'emp-ja',       leaveType:'Sick',        start:'2026-06-15', end:'2026-06-15', days:1, filed:'2026-06-14', status:'Rejected', rejectReason:'Requested date falls within the QA release freeze; no coverage was arranged in advance.'},
+  {id:'r17', employeeId:'emp-carlo',    leaveType:'Emergency',   start:'2026-09-15', end:'2026-09-15', days:1, filed:'2026-09-15', status:'Pending'},
+  {id:'r18', employeeId:'emp-meinard',  leaveType:'Sick',        start:'2026-09-13', end:'2026-09-13', days:1, filed:'2026-09-12', status:'Approved'},
+  {id:'r19', employeeId:'emp-paulmgr',  leaveType:'Vacation',    start:'2026-09-29', end:'2026-09-30', days:2, filed:'2026-09-16', status:'Pending'},
+  {id:'r20', employeeId:'emp-paulmgr',  leaveType:'Sick',        start:'2026-08-04', end:'2026-08-04', days:1, filed:'2026-08-03', status:'Approved'},
+  {id:'r21', employeeId:'emp-eliakim',  leaveType:'Sick',        start:'2026-08-05', end:'2026-08-05', days:1, filed:'2026-08-04', status:'Approved'},
+  {id:'r22', employeeId:'emp-eliakim',  leaveType:'Vacation',    start:'2026-09-21', end:'2026-09-22', days:2, filed:'2026-09-10', status:'Pending'},
+  {id:'r23', employeeId:'emp-beaadmin', leaveType:'Vacation',    start:'2026-06-10', end:'2026-06-12', days:3, filed:'2026-06-05', status:'Approved'},
+  {id:'r24', employeeId:'emp-carlo', leaveType:'Vacation', start:'2026-10-05', end:'2026-10-06', days:2, filed:'2026-09-20', status:'Cancelled'},
+];
+let nextReqId = 24;
+/* Imported balance sync: BAL_ADJ[empId][leaveType] is added as an adjustment so Available = Accrued + Adjusted - Used - Pending equals the uploaded remaining balance */
+const BAL_ADJ = {};
+const ADJ_LOG = [];   // balance adjustments: {empId,type,delta,before,after,reason,by,date}
+let balSync = null;   // {file, date, employees, cells, by} — last import
+let imp = null;       // import wizard state
+
+/* ---- Holidays (sample data; source of truth is the T201 holiday calendar) ---- */
+const HOLIDAYS = {
+  '2026-06-12':'Independence Day','2026-08-21':'Ninoy Aquino Day','2026-08-31':'National Heroes Day',
+  '2026-11-01':"All Saints' Day",'2026-11-30':'Bonifacio Day','2026-12-08':'Feast of the Immaculate Conception',
+  '2026-12-24':'Christmas Eve','2026-12-25':'Christmas Day','2026-12-30':'Rizal Day','2026-12-31':'Last Day of the Year'
+};
+function isoOf(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function expandRange(s,e){
+  const out=[], d=new Date(s+'T00:00:00'), end=new Date(e+'T00:00:00');
+  while(d<=end){ out.push(isoOf(d)); d.setDate(d.getDate()+1); }
+  return out;
+}
+function isWeekend(iso){ const wd=new Date(iso+'T00:00:00').getDay(); return wd===0||wd===6; }
+function excludedLabel(iso){ return HOLIDAYS[iso] || (isWeekend(iso) ? 'Weekend' : ''); }
+function summarizeDates(dates){
+  const all = Array.from(new Set(dates)).sort();
+  return {all:all, holidays:all.filter(x=>HOLIDAYS[x]||isWeekend(x)), leave:all.filter(x=>!HOLIDAYS[x]&&!isWeekend(x))};
+}
+REQUESTS.forEach(r=>{ const s=summarizeDates(expandRange(r.start,r.end)); r.dates=s.leave; r.skipped=s.holidays; r.days=s.leave.length; });
+function fmtDates(r){
+  const ds = (r.dates && r.dates.length) ? r.dates : expandRange(r.start,r.end);
+  const years = new Set(ds.map(x=>x.slice(0,4)));
+  if(years.size>1) return ds.map(fmtDateShort).join(', ');
+  const md = x=>new Date(x+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const runs=[];
+  ds.forEach(x=>{
+    const last=runs[runs.length-1];
+    if(last && expandRange(last[last.length-1],x).length===2) last.push(x); else runs.push([x]);
+  });
+  const txt = runs.map(g=>{
+    if(g.length===1) return md(g[0]);
+    const a=g[0], b=g[g.length-1];
+    return md(a)+'\u2013'+(a.slice(0,7)===b.slice(0,7) ? String(+b.slice(8)) : md(b));
+  }).join(', ');
+  return txt+', '+ds[0].slice(0,4);
+}
+let fileDates = [];
+
+const ROLES = {
+  employee:   {label:'Employee',   sub:'Self-service · own records',      user:'Jhumel Tapia',    empId:'emp-jhumel',   icon:'users'},
+  manager:    {label:'Manager',    sub:'Department-scoped access & approvals',  user:'Paul Manager',     empId:'emp-paulmgr',  dept:'Engineering', icon:'briefcase'},
+  supervisor: {label:'Supervisor', sub:'Team-scoped access & approvals',  user:'Eliakim Toluan',   empId:'emp-eliakim',  team:'QA Team',     icon:'shield'},
+  superadmin: {label:'Super Admin',sub:'Organization-wide access',        user:'Bea Super Admin',  empId:'emp-beaadmin', icon:'lock'},
+};
+const ROLE_ORDER = ['employee','manager','supervisor','superadmin'];
+
+/* ============================= STATE ============================= */
+const state = {
+  role: 'superadmin',
+  view: 'leaveManagement',      // leaveManagement | myLeave | employeeProfile
+  selectedEmployee: null,
+  profileSubTab: 'balance',     // balance | history
+  myLeaveTab: 'balance',        // balance | requests
+  leaveMgmtTab: 'requests',     // requests | balance | myRequests  (own balance opens in the right-side drawer)
+  balDrawer: null,              // null | 'my' | 'emp'
+  drawerAnim: false,
+  statusFilter: 'all',
+  search: '',
+  typeFilter: 'all',
+  leaveRange: {from:'', to:'', 
+  label:'All periods'},
+  rangeMonth: '2026-09',
+  rangeKey: 'leave',            // which range picker is open: 'leave' | 'filed'
+  filedRange: {from:'', to:'', label:'All periods'},
+  filedDateFilter: '',
+  roleMenuOpen: false,
+  notifOpen: false,
+  modal: null,                  // {type:'review'|'view'|'file', requestId, employeeId}
+  theme: 'dark',
+  toast: null,
+  calOpen: null,                // 'leave' | 'filed'
+  calMonth: '2026-09',
+  deptFilter: 'all',
+  balSearch: '',
+  balDept: 'all',
+};
+
+const DEPARTMENTS = Array.from(new Set(EMPLOYEES.map(e=>e.dept))).sort();
+function deptSelect(value, handler){
+  return '<select class="filter-select" onchange="'+handler+'(this.value)"><option value="all">All departments</option>'+
+    DEPARTMENTS.map(d=>'<option value="'+d+'"'+(value===d?' selected':'')+'>'+d+'</option>').join('')+'</select>';
+}
+
+/* ============================= HELPERS ============================= */
+function getEmp(id){ return EMPLOYEES.find(e=>e.id===id); }
+function initials(name){ return name.split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase(); }
+function fmtDateShort(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function fmtRange(start,end){
+  if(start===end) return fmtDateShort(start);
+  const d1=new Date(start+'T00:00:00'), d2=new Date(end+'T00:00:00');
+  if(d1.getMonth()===d2.getMonth() && d1.getFullYear()===d2.getFullYear()){
+    return d1.toLocaleDateString('en-US',{month:'short',day:'numeric'})+'–'+d2.getDate()+', '+d2.getFullYear();
+  }
+  return d1.toLocaleDateString('en-US',{month:'short',day:'numeric'})+' – '+fmtDateShort(end);
+}
+function currentRoleCfg(){ return ROLES[state.role]; }
+function currentUserEmpId(){ return ROLES[state.role].empId; }
+
+function getScopedRequests(){
+  if(state.role==='superadmin') return REQUESTS;
+  if(state.role==='manager') return REQUESTS.filter(r=> getEmp(r.employeeId).dept === ROLES.manager.dept);
+  if(state.role==='supervisor') return REQUESTS.filter(r=> getEmp(r.employeeId).team === ROLES.supervisor.team);
+  if(state.role==='employee') return REQUESTS.filter(r=> r.employeeId === ROLES.employee.empId);
+  return [];
+}
+function canApproveReject(req){
+  if(!req) return false;
+  if(state.role==='superadmin') return true;
+  if(state.role==='manager') return getEmp(req.employeeId).dept === ROLES.manager.dept;
+  if(state.role==='supervisor') return getEmp(req.employeeId).team === ROLES.supervisor.team;
+  return false;
+}
+function canFileOnBehalf(emp){
+  if(emp.id === currentUserEmpId()) return true;
+  if(state.role==='superadmin') return true;
+  if(state.role==='manager') return emp.dept === ROLES.manager.dept;
+  if(state.role==='supervisor') return emp.team === ROLES.supervisor.team;
+  return false;
+}
+function getScopedEmployees(){
+  if(state.role==='superadmin') return EMPLOYEES;
+  if(state.role==='manager') return EMPLOYEES.filter(e=>e.dept===ROLES.manager.dept);
+  if(state.role==='supervisor') return EMPLOYEES.filter(e=>e.team===ROLES.supervisor.team);
+  if(state.role==='employee') return EMPLOYEES.filter(e=>e.id===ROLES.employee.empId);
+  return [];
+}
+function canOpenProfile(emp){
+  if(state.role==='superadmin') return true;
+  if(state.role==='manager') return emp.dept === ROLES.manager.dept;
+  if(state.role==='supervisor') return emp.team === ROLES.supervisor.team;
+  if(state.role==='employee') return emp.id === ROLES.employee.empId;
+  return false;
+}
+function getBalances(emp){
+  const base = emp.status === 'Probationary'
+    ? {Vacation:2, Sick:1, Emergency:0, Bereavement:0, Birthday:0}
+    : {Vacation:15, Sick:15, Emergency:3, Bereavement:3, Birthday:1};
+  return LEAVE_TYPES.map(type=>{
+    const entitled = base[type], accrued = entitled;
+    const used = REQUESTS.filter(r=>r.employeeId===emp.id && r.leaveType===type && r.status==='Approved').reduce((s,r)=>s+r.days,0);
+    const pending = REQUESTS.filter(r=>r.employeeId===emp.id && r.leaveType===type && r.status==='Pending').reduce((s,r)=>s+r.days,0);
+    const adjusted = (BAL_ADJ[emp.id]||{})[type] || 0;
+    const available = Math.max(0, accrued + adjusted - used - pending);
+    return {type, entitled, accrued, adjusted, used, pending, available};
+  });
+}
+function badge(status){
+  const cls = status.toLowerCase();
+  return '<span class="badge '+cls+'">'+status+'</span>';
+}
+function balanceTotals(balances){
+  return balances.reduce((t,b)=>{
+    t.entitled+=b.entitled; t.accrued+=b.accrued; t.adjusted+=b.adjusted;
+    t.used+=b.used; t.pending+=b.pending; t.available+=b.available;
+    return t;
+  }, {entitled:0,accrued:0,adjusted:0,used:0,pending:0,available:0});
+}
+function renderBalanceTable(balances){
+  const t = balanceTotals(balances);
+  const rows = balances.map(b=>{
+    const pct = b.accrued>0 ? Math.min(100, Math.round((b.used/b.accrued)*100)) : 0;
+    return '<tr><td><div class="leave-type-cell">'+
+        '<div class="leave-progress-icon leave-progress-icon-sm">'+ic(TYPE_ICON[b.type]||'leaf',15)+'</div>'+
+        '<div class="mini-progress-wrap">'+
+          '<div style="font-weight:700">'+b.type+'</div>'+
+          '<div class="mini-progress-track"><div class="mini-progress-fill" style="width:'+pct+'%"></div></div>'+
+          '<div class="mini-progress-tooltip">'+b.used+' used &middot; '+b.accrued+' accrued</div>'+
+        '</div>'+
+      '</div></td>'+
+      '<td>'+b.entitled+'</td><td>'+b.accrued+'</td><td>'+b.adjusted+'</td><td>'+b.used+'</td><td>'+b.pending+'</td>'+
+      '<td><span class="avail-badge">'+b.available+'</span></td></tr>';
+  }).join('');
+  return '<div class="table-card"><table><thead><tr>'+
+    '<th>Leave Type</th><th>Entitled</th><th>Accrued</th><th>Adjusted</th><th>Used</th><th>Pending</th><th>Available</th>'+
+    '</tr></thead><tbody>'+rows+
+    '<tr class="total-row"><td>Total</td><td>'+t.entitled+'</td><td>'+t.accrued+'</td><td>'+t.adjusted+'</td><td>'+t.used+'</td><td>'+t.pending+'</td><td><span class="avail-badge">'+t.available+'</span></td></tr>'+
+    '</tbody></table><div class="balance-note">Available = Accrued + Adjusted \u2212 Used \u2212 Pending. Hover the bar under Vacation or Sick to see accrued vs. used.</div></div>';
+}
+
+/* ============================= CALENDAR PICKER ============================= */
+const TODAY = '2026-09-28';
+function ymShift(ym,n){ const d=new Date(ym+'-01T00:00:00'); d.setMonth(d.getMonth()+n); return isoOf(d).slice(0,7); }
+function calHTML(ym, sel, pickFn, navFn, startMark){
+  const first=new Date(ym+'-01T00:00:00'), lead=first.getDay();
+  const dim=new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+  let cells='';
+  for(let i=0;i<lead;i++) cells+='<span class="cal-day cal-empty"></span>';
+  for(let d=1; d<=dim; d++){
+    const iso=ym+'-'+String(d).padStart(2,'0');
+    const wknd = !HOLIDAYS[iso] && isWeekend(iso);
+    const cls='cal-day'+(HOLIDAYS[iso]?' cal-hol':'')+(wknd?' cal-weekend':'')+(iso===TODAY?' cal-today':'')+(iso===startMark?' cal-start':'')+(sel.indexOf(iso)>-1?' cal-sel':'');
+    const ttl = HOLIDAYS[iso] ? ' title="'+HOLIDAYS[iso]+' (holiday)"' : (wknd ? ' title="Weekend \u2014 not a working day"' : '');
+    cells+='<span class="'+cls+'"'+ttl+' onclick="'+pickFn+'(\''+iso+'\')">'+d+'</span>';
+  }
+  const title=first.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  return '<div class="cal"><div class="cal-head"><span class="cal-nav" onclick="'+navFn+'(-1)">\u2039</span><b>'+title+'</b><span class="cal-nav" onclick="'+navFn+'(1)">\u203a</span></div>'+
+    '<div class="cal-grid">'+['S','M','T','W','T','F','S'].map(x=>'<span class="cal-dow">'+x+'</span>').join('')+cells+'</div>'+
+    '<div class="cal-legend">Amber = holiday &middot; faded = weekend &mdash; neither counts as a leave day</div></div>';
+}
+/* filter date pickers (Leave Date / Date Filed) */
+function dateField(label,key,val){
+  const pick = key==='leave' ? 'pickLeaveDate' : 'pickFiledDate';
+  return '<div class="date-field"><label class="date-field-label">'+label+'</label>'+
+    '<div class="date-btn'+(val?' has':'')+'" onclick="event.stopPropagation();toggleCal(\''+key+'\')">'+ic('calendar',14)+'<span>'+(val?fmtDateShort(val):'Select date')+'</span>'+
+    (val?'<span class="date-clear" onclick="event.stopPropagation();'+pick+'(\'\')">\u00d7</span>':'')+'</div>'+
+    (state.calOpen===key ? '<div class="cal-pop" onclick="event.stopPropagation()">'+calHTML(state.calMonth,val?[val]:[],pick,'calNav')+'</div>' : '')+'</div>';
+}
+function toggleCal(key){
+  state.roleMenuOpen=false; state.notifOpen=false;
+  state.calOpen = state.calOpen===key ? null : key;
+  const v = key==='leave' ? state.leaveDateFilter : state.filedDateFilter;
+  state.calMonth = (v||TODAY).slice(0,7); render();
+}
+function calNav(n){ state.calMonth=ymShift(state.calMonth,n); render(); }
+function pickLeaveDate(iso){ state.leaveDateFilter=iso; state.calOpen=null; render(); }
+function pickFiledDate(iso){ state.filedDateFilter=iso; state.calOpen=null; render(); }
+document.addEventListener('click', ()=>{ if(state.calOpen){ state.calOpen=null; render(); } });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && state.balDrawer && !state.modal) closeBalDrawer(); });
+/* File Leave calendar: multiple individual dates or a range (updates in place so the form keeps its values) */
+let flMonth=TODAY.slice(0,7), flMode='multi', flRangeStart='';
+/* ---- Leave Date range picker ---- */
+let drDraft = {from:'', to:'', label:'All periods'};
+function drPresets(){
+  const y = +TODAY.slice(0,4);
+  return [
+    {key:'all', label:'All periods', from:'', to:''},
+    {key:'y0',  label:String(y),     from:y+'-01-01',     to:y+'-12-31'},
+    {key:'y1',  label:String(y-1),   from:(y-1)+'-01-01', to:(y-1)+'-12-31'},
+    {key:'mtd', label:'Month to date', from:TODAY.slice(0,8)+'01', to:TODAY},
+    {key:'ytd', label:'Year to date',  from:y+'-01-01',     to:TODAY},
+  ];
+}
+function rangeText(r){
+  if(!r.from) return 'All periods';
+  if(r.label && r.label!=='Custom') return r.label;
+  return r.from===r.to ? fmtDateShort(r.from) : fmtDateShort(r.from)+' \u2013 '+fmtDateShort(r.to);
+}
+function rangeVal(key){ return key==='filed' ? state.filedRange : state.leaveRange; }
+function toggleRange(key){
+  state.roleMenuOpen=false; state.notifOpen=false;
+  if(state.calOpen==='range-'+key){ state.calOpen=null; }
+  else {
+    state.calOpen='range-'+key; state.rangeKey=key;
+    drDraft = Object.assign({}, rangeVal(key));
+    state.rangeMonth = (drDraft.from||TODAY).slice(0,7);
+  }
+  render();
+}
+function drQuick(key){
+  const p = drPresets().find(x=>x.key===key);
+  drDraft = {from:p.from, to:p.to, label:p.label};
+  if(p.from) state.rangeMonth = p.from.slice(0,7);
+  render();
+}
+function drPick(iso){
+  if(!drDraft.from || drDraft.to){ drDraft = {from:iso, to:'', label:'Custom'}; }
+  else if(iso < drDraft.from){ drDraft = {from:iso, to:drDraft.from, label:'Custom'}; }
+  else { drDraft = {from:drDraft.from, to:iso, label:'Custom'}; }
+  render();
+}
+function drNav(n){ state.rangeMonth = ymShift(state.rangeMonth, n); render(); }
+function drApply(){
+  if(drDraft.from && !drDraft.to) drDraft.to = drDraft.from;
+  if(state.rangeKey==='filed') state.filedRange = Object.assign({}, drDraft); else state.leaveRange = Object.assign({}, drDraft);
+  state.calOpen = null; render();
+}
+function drCancel(){ state.calOpen=null; render(); }
+function drMonthHTML(ym, side){
+  const first=new Date(ym+'-01T00:00:00'), lead=first.getDay();
+  const dim=new Date(first.getFullYear(), first.getMonth()+1, 0).getDate();
+  const f=drDraft.from, t=drDraft.to;
+  let cells='';
+  for(let i=0;i<lead;i++) cells+='<span class="cal-day cal-empty"></span>';
+  for(let d=1; d<=dim; d++){
+    const iso=ym+'-'+String(d).padStart(2,'0');
+    const cls='cal-day'+(iso===TODAY?' cal-today':'')+((iso===f||iso===t)?' cal-sel':'')+((f&&t&&iso>f&&iso<t)?' cal-inrange':'');
+    cells+='<span class="'+cls+'" onclick="drPick(\''+iso+'\')">'+d+'</span>';
+  }
+  const title = first.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  return '<div class="dr-month"><div class="dr-head">'+
+    '<span class="dr-nav'+(side==='left'?'':' hidden')+'" onclick="drNav(-1)">\u2039</span><b>'+title+'</b>'+
+    '<span class="dr-nav'+(side==='right'?'':' hidden')+'" onclick="drNav(1)">\u203a</span></div>'+
+    '<div class="cal-grid">'+['Su','Mo','Tu','We','Th','Fr','Sa'].map(x=>'<span class="cal-dow">'+x+'</span>').join('')+cells+'</div></div>';
+}
+function rangeField(label,key,note){
+  const r = rangeVal(key);
+  const pop = state.calOpen!=='range-'+key ? '' :
+    '<div class="dr-pop" onclick="event.stopPropagation()">'+
+      '<div class="dr-quick"><div class="dr-quick-label">QUICK PICK</div>'+
+        drPresets().map(p=>'<div class="dr-quick-item'+(drDraft.label===p.label?' active':'')+'" onclick="drQuick(\''+p.key+'\')">'+p.label+'</div>').join('')+
+        '<div class="dr-quick-note">'+note+'</div></div>'+
+      '<div class="dr-main"><div class="dr-months">'+drMonthHTML(state.rangeMonth,'left')+drMonthHTML(ymShift(state.rangeMonth,1),'right')+'</div>'+
+        '<div class="dr-foot"><button class="btn btn-ghost btn-sm" onclick="drCancel()">Cancel</button><button class="btn btn-accent btn-sm" onclick="drApply()">Apply</button></div></div>'+
+    '</div>';
+  return '<div class="date-field"><label class="date-field-label">'+label+'</label>'+
+    '<div class="date-btn'+(r.from?' has':'')+'" onclick="event.stopPropagation();toggleRange(\''+key+'\')">'+ic('calendar',14)+'<span>'+rangeText(r)+'</span></div>'+pop+'</div>';
+}
+function flCalRefresh(){
+  const el=document.getElementById('fl-cal'); if(!el) return;
+  el.innerHTML = calHTML(flMonth, fileDates, 'flPick', 'flNav', flRangeStart);
+  const h=document.getElementById('fl-hint');
+  if(h) h.textContent = flMode==='range'
+    ? (flRangeStart ? 'Now click the end date of the range.' : 'Click a start date, then an end date. Repeat to add more ranges.')
+    : 'Click dates to select or deselect them; they need not be consecutive (e.g. Mon, Wed, Fri). Holidays and weekends are not counted as leave days.';
+  updateFileDatesUI();
+}
+function flNav(n){ flMonth=ymShift(flMonth,n); flCalRefresh(); }
+function flSetMode(m){
+  flMode=m; flRangeStart='';
+  document.getElementById('fl-mode-multi').classList.toggle('active', m==='multi');
+  document.getElementById('fl-mode-range').classList.toggle('active', m==='range');
+  flCalRefresh();
+}
+function flPick(iso){
+  if(flMode==='range'){
+    if(!flRangeStart){ flRangeStart=iso; }
+    else { let a=flRangeStart, b=iso; if(b<a){ const t=a; a=b; b=t; } fileDates=fileDates.concat(expandRange(a,b)); flRangeStart=''; }
+  } else {
+    fileDates = fileDates.indexOf(iso)>-1 ? fileDates.filter(x=>x!==iso) : fileDates.concat(iso);
+  }
+  flCalRefresh();
+}
+
+/* ============================= ACTIONS ============================= */
+function setRole(role){
+  state.role = role;
+  state.view = role==='employee' ? 'myLeave' : 'leaveManagement';
+  state.selectedEmployee = null;
+  state.leaveMgmtTab = 'requests'; state.balDrawer = null;
+  state.statusFilter = 'all'; state.search=''; state.typeFilter='all';
+  state.leaveRange={from:'',to:'',label:'All periods'}; state.filedRange={from:'',to:'',label:'All periods'};
+  state.roleMenuOpen = false;
+  state.deptFilter='all'; state.balSearch=''; state.balDept='all';
+  render();
+}
+function toggleRoleMenu(e){ e.stopPropagation(); state.notifOpen=false; state.roleMenuOpen = !state.roleMenuOpen; render(); }
+function toggleNotif(e){ e.stopPropagation(); state.roleMenuOpen=false; state.notifOpen = !state.notifOpen; render(); }
+function toggleTheme(){ state.theme = state.theme==='dark' ? 'light' : 'dark'; render(); }
+function closeMenus(){ if(state.roleMenuOpen||state.notifOpen){ state.roleMenuOpen=false; state.notifOpen=false; render(); } }
+
+function goToLeaveManagement(){ state.view='leaveManagement'; state.selectedEmployee=null; render(); }
+function goToEmployee(empId){
+  const emp = getEmp(empId);
+  if(!emp || !canOpenProfile(emp)) return;
+  state.balDrawer = null;
+  state.selectedEmployee = empId;
+  state.profileSubTab = 'balance';
+  state.view = 'employeeProfile';
+  render();
+}
+function setWidgetFilter(status){ state.statusFilter = status; render(); }
+function setSearch(v){ state.search = v; render(); const i=document.querySelector('.search-box input'); if(i){ i.focus(); i.setSelectionRange(v.length,v.length); } }
+function setTypeFilter(v){ state.typeFilter=v; render(); }
+function setLeaveDateFilter(v){ state.leaveDateFilter=v; render(); }
+function setFiledDateFilter(v){ state.filedDateFilter=v; render(); }
+function clearFilters(){
+  state.deptFilter='all';
+  state.statusFilter='all'; state.search=''; state.typeFilter='all';
+  state.leaveRange={from:'',to:'',label:'All periods'}; state.filedRange={from:'',to:'',label:'All periods'}; state.filedDateFilter=''; state.calOpen=null; render();
+}
+function setDeptFilter(v){ state.deptFilter=v; render(); }
+function setBalSearch(v){ state.balSearch=v; render(); const i=document.querySelector(state.balDrawer?'.drawer .search-box input':'.search-box input'); if(i){ i.focus(); i.setSelectionRange(v.length,v.length); } }
+function setBalDept(v){ state.balDept=v; render(); }
+function clearBalFilters(){ state.balSearch=''; state.balDept='all'; render(); }
+function setLeaveMgmtTab(t){ state.leaveMgmtTab=t; render(); }
+function openBalDrawer(view){ state.balDrawer=view; state.drawerAnim=true; render(); }
+function closeBalDrawer(){ state.balDrawer=null; render(); }
+function setBalDrawerView(v){ state.balDrawer=v; render(); }
+function setProfileSubTab(t){ state.profileSubTab=t; render(); }
+function setMyLeaveTab(t){ state.myLeaveTab=t; render(); }
+
+function openReview(reqId){ state.modal={type:'review', requestId:reqId}; render(); }
+function openView(reqId){ state.modal={type:'view', requestId:reqId}; render(); }
+function openFile(empId){ fileDates=[]; flMode='multi'; flRangeStart=''; flMonth=TODAY.slice(0,7); state.calOpen=null; state.modal={type:'file', employeeId:empId}; render(); flCalRefresh(); }
+function closeModal(){ state.modal=null; render(); }
+
+function showToast(msg){
+  state.toast = msg; render();
+  setTimeout(()=>{ state.toast=null; render(); }, 2600);
+}
+/* ============================= BALANCE IMPORT (CSV / XLSX) ============================= */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,'');
+  const first = text.split(/\r?\n/)[0] || '';
+  const delim = (first.split('\t').length>first.split(',').length) ? '\t' : (first.split(';').length>first.split(',').length ? ';' : ',');
+  const rows=[]; let row=[], cell='', q=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=c; }
+    else if(c==='"') q=true;
+    else if(c===delim){ row.push(cell); cell=''; }
+    else if(c==='\n'||c==='\r'){ if(c==='\r'&&text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; }
+    else cell+=c;
+  }
+  if(cell!==''||row.length){ row.push(cell); rows.push(row); }
+  return rows;
+}
+/* Minimal .xlsx reader (zip + XML) so no external library is needed; reads the first worksheet */
+async function readXlsx(buf){
+  const u8=new Uint8Array(buf), dv=new DataView(buf);
+  let eocd=-1; for(let i=u8.length-22;i>=0;i--){ if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; } }
+  if(eocd<0) throw new Error('this is not a valid .xlsx file');
+  const count=dv.getUint16(eocd+10,true); let p=dv.getUint32(eocd+16,true); const entries={};
+  for(let i=0;i<count;i++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const method=dv.getUint16(p+10,true), csize=dv.getUint32(p+20,true), nl=dv.getUint16(p+28,true), el=dv.getUint16(p+30,true), cl=dv.getUint16(p+32,true), lho=dv.getUint32(p+42,true);
+    entries[new TextDecoder().decode(u8.subarray(p+46,p+46+nl))]={method,csize,lho}; p+=46+nl+el+cl;
+  }
+  const read=async(name)=>{
+    const e=entries[name]; if(!e) return null;
+    const start=e.lho+30+dv.getUint16(e.lho+26,true)+dv.getUint16(e.lho+28,true);
+    const data=u8.subarray(start,start+e.csize);
+    if(e.method===0) return new TextDecoder().decode(data);
+    return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  };
+  const xml=(t)=>new DOMParser().parseFromString(t,'application/xml');
+  const sheetName=Object.keys(entries).filter(n=>/^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort((a,b)=>parseInt(a.match(/\d+/)[0])-parseInt(b.match(/\d+/)[0]))[0];
+  if(!sheetName) throw new Error('no worksheet found');
+  const shared=[]; const sst=await read('xl/sharedStrings.xml');
+  if(sst) [...xml(sst).getElementsByTagName('si')].forEach(si=>shared.push([...si.getElementsByTagName('t')].map(t=>t.textContent).join('')));
+  const sheet=xml(await read(sheetName)); const rows=[];
+  [...sheet.getElementsByTagName('row')].forEach(r=>{
+    const arr=[];
+    [...r.getElementsByTagName('c')].forEach(c=>{
+      const ref=c.getAttribute('r')||''; let col=0; (ref.match(/^[A-Z]+/)||[''])[0].split('').forEach(ch=>{ col=col*26+(ch.charCodeAt(0)-64); }); col=Math.max(col-1,arr.length&&!ref?arr.length:0);
+      const t=c.getAttribute('t'), v=c.getElementsByTagName('v')[0], is=c.getElementsByTagName('is')[0];
+      let val=''; if(t==='s'&&v) val=shared[parseInt(v.textContent,10)]||''; else if(t==='inlineStr'&&is) val=[...is.getElementsByTagName('t')].map(x=>x.textContent).join(''); else if(v) val=v.textContent;
+      arr[col]=val;
+    });
+    rows.push(Array.from(arr,x=>x==null?'':x));
+  });
+  return rows;
+}
+function normHead(h){ return String(h==null?'':h).toLowerCase().replace(/[^a-z]/g,''); }
+function buildImportPreview(rows, fileName){
+  rows = rows.filter(r=>r.some(c=>String(c==null?'':c).trim()!==''));
+  if(rows.length<2) return {stage:'upload', fileName, error:'The file needs a header row and at least one employee row.'};
+  const head = rows[0].map(normHead);
+  const nameCol = head.findIndex(h=>['employee','employeename','name','fullname'].includes(h));
+  const idCol = head.findIndex(h=>['employeeid','empid','id'].includes(h));
+  const typeCols = {}; LEAVE_TYPES.forEach(t=>{ const i=head.findIndex(h=>h.indexOf(t.toLowerCase())===0); if(i>-1) typeCols[t]=i; });
+  if(nameCol<0 && idCol<0) return {stage:'upload', fileName, error:'Could not find an "Employee Name" (or "Employee ID") column in the header row.'};
+  if(Object.keys(typeCols).length===0) return {stage:'upload', fileName, error:'Could not find any leave type columns. Expected headers: '+LEAVE_TYPES.join(', ')+'.'};
+  const scope = getScopedEmployees(); const seen = {}; const out = [];
+  rows.slice(1).forEach((r,i)=>{
+    const rawName = nameCol>-1 ? String(r[nameCol]||'').trim() : '', rawId = idCol>-1 ? String(r[idCol]||'').trim() : '';
+    const emp = EMPLOYEES.find(e=> (rawId && e.id.toLowerCase()===rawId.toLowerCase()) || (rawName && e.name.toLowerCase().replace(/\s+/g,' ')===rawName.toLowerCase().replace(/\s+/g,' ')));
+    const row = {line:i+2, name:rawName||rawId, emp:emp||null, status:'ok', reason:'', cells:{}};
+    if(!emp){ row.status='notfound'; row.reason='No employee with this name or ID.'; out.push(row); return; }
+    row.name = emp.name;
+    if(!scope.some(e=>e.id===emp.id)){ row.status='scope'; row.reason='Outside your scope.'; out.push(row); return; }
+    if(seen[emp.id]){ row.status='dup'; row.reason='Duplicate of row '+seen[emp.id]+'; the first row is used.'; out.push(row); return; }
+    seen[emp.id]=row.line;
+    const bals = getBalances(emp); const bad=[]; let changed=0;
+    LEAVE_TYPES.forEach(t=>{
+      if(!(t in typeCols)) return;
+      const raw = String(r[typeCols[t]]==null?'':r[typeCols[t]]).trim(); const cur = bals.find(b=>b.type===t);
+      if(raw===''){ row.cells[t]={blank:true, from:cur.available}; return; }
+      const n = Number(raw);
+      if(!isFinite(n) || n<0){ bad.push(t+' "'+raw+'" must be a number of 0 or more'); return; }
+      row.cells[t]={from:cur.available, to:n, base:cur.accrued-cur.used-cur.pending};
+      if(n!==cur.available) changed++;
+    });
+    if(bad.length){ row.status='invalid'; row.reason=bad.join('; ')+'.'; }
+    else if(!changed){ row.status='same'; row.reason='Already matches the current balance.'; }
+    out.push(row);
+  });
+  return {stage:'preview', fileName, typeCols:Object.keys(typeCols), rows:out};
+}
+function finishImport(rows, name){ imp = buildImportPreview(rows, name); render(); }
+function openImport(){ imp = {stage:'upload'}; state.modal = {type:'import'}; render(); }
+function handleImportFile(f){
+  const file = f && f.files ? f.files[0] : f; if(!file) return;
+  const name = file.name, ext = (name.split('.').pop()||'').toLowerCase();
+  const fail = (msg)=>{ imp = {stage:'upload', fileName:name, error:msg}; render(); };
+  if(file.size>5*1024*1024) return fail('File is too large (max 5MB).');
+  if(['csv','tsv','txt'].includes(ext)){ const fr=new FileReader(); fr.onload=()=>finishImport(parseCSV(String(fr.result)), name); fr.onerror=()=>fail('Could not read the file.'); fr.readAsText(file); }
+  else if(['xlsx','xlsm'].includes(ext)){ file.arrayBuffer().then(readXlsx).then(rows=>finishImport(rows,name)).catch(e=>fail('Could not read this Excel file: '+e.message+'.')); }
+  else if(ext==='xls') fail('Legacy .xls files are not supported. Save the sheet as .xlsx or .csv and upload it again.');
+  else fail('Unsupported file type. Upload a .csv or .xlsx file.');
+}
+function importCounts(){
+  const c={ok:0,same:0,skipped:0,cells:0};
+  (imp.rows||[]).forEach(r=>{ if(r.status==='ok'){ c.ok++; Object.keys(r.cells).forEach(t=>{ const x=r.cells[t]; if(!x.blank && x.to!==x.from) c.cells++; }); } else if(r.status==='same') c.same++; else c.skipped++; });
+  return c;
+}
+function applyImport(){
+  if(!imp || imp.stage!=='preview') return;
+  const c = importCounts(); if(!c.ok) return;
+  imp.rows.filter(r=>r.status==='ok').forEach(r=>{
+    BAL_ADJ[r.emp.id] = BAL_ADJ[r.emp.id] || {};
+    Object.keys(r.cells).forEach(t=>{ const x=r.cells[t]; if(!x.blank && x.to!==x.from){ BAL_ADJ[r.emp.id][t] = x.to - x.base; ADJ_LOG.push({empId:r.emp.id,type:t,delta:x.to-x.from,before:x.from,after:x.to,reason:'Balance import ('+imp.fileName+')',by:ROLES[state.role].user,date:fmtDateShort(TODAY)}); } });
+  });
+  balSync = {file:imp.fileName, date:fmtDateShort(TODAY), employees:c.ok, cells:c.cells, by:ROLES[state.role].user};
+  imp = null; state.modal = null; showToast('Balances synced for '+c.ok+' employee'+(c.ok===1?'':'s')+'.');
+}
+function downloadBalanceTemplate(){
+  const rows = [['Employee Name'].concat(LEAVE_TYPES)];
+  getScopedEmployees().sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{ const b=getBalances(e); rows.push([e.name].concat(LEAVE_TYPES.map(t=>b.find(x=>x.type===t).available))); });
+  const csv = rows.map(r=>r.map(v=>/[",\n]/.test(String(v))?'"'+String(v).replace(/"/g,'""')+'"':v).join(',')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='leave-balance-template.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function renderImportModal(){
+  const isSA = state.role==='superadmin';
+  const head = '<div class="modal-head"><div class="modal-title">Import leave balances</div>'+
+    '<div class="modal-subtitle">Upload a CSV or Excel file to sync the remaining leave balance of employees.</div>'+
+    '<span class="modal-close" onclick="closeModal()">'+ic('x',18)+'</span></div>';
+  let body, foot='';
+  if(!imp || imp.stage==='upload'){
+    body = '<div class="modal-body">'+
+      '<p class="imp-rule"><b>Uploading overrides the existing balance.</b> The remaining (Available) balance of every employee and leave type found in the file is replaced by the value in the file. Blank cells and employees not in the file are left unchanged. '+(isSA?'Applies to any employee in the organization.':'Only employees within your scope are updated; other rows are skipped.')+'</p>'+
+      '<div class="dropzone" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="event.preventDefault();this.classList.remove(\'drag-over\');if(event.dataTransfer.files[0])handleImportFile(event.dataTransfer.files[0])">'+
+        '<div class="dropzone-text">Drag and drop a CSV or Excel file here, or choose a file</div>'+
+        '<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'imp-file\').click()">'+ic('upload',14)+'Choose file</button>'+
+        '<div class="dropzone-hint">.csv or .xlsx &middot; first sheet is used &middot; max 5MB</div>'+
+        (imp&&imp.fileName?'<div class="dropzone-filename">'+imp.fileName+'</div>':'')+
+      '</div>'+
+      '<input type="file" id="imp-file" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.xls,text/csv" style="display:none" onchange="handleImportFile(this)">'+
+      (imp&&imp.error?'<div class="field-error" id="imp-error">'+imp.error+'</div>':'')+
+      '<div class="form-label" style="margin-top:18px">Expected format</div>'+
+      '<table class="imp-sample"><thead><tr><th>Employee Name</th>'+LEAVE_TYPES.map(t=>'<th>'+t+'</th>').join('')+'</tr></thead><tbody>'+
+        '<tr><td>Andrea Lim</td><td>12</td><td>15</td><td>3</td><td>3</td><td>1</td></tr>'+
+        '<tr><td>Carlo Reyes</td><td>10</td><td>14</td><td>2</td><td>3</td><td>0</td></tr></tbody></table>'+
+      '<div class="dropzone-hint" style="margin-top:8px">Values are remaining days. An "Employee ID" column can be used instead of the name.</div>'+
+    '</div>';
+    foot = '<div class="modal-foot"><button class="btn btn-ghost" onclick="downloadBalanceTemplate()">'+ic('download',15)+'Download template</button><span style="flex:1"></span><button class="btn btn-ghost" onclick="closeModal()">Cancel</button></div>';
+  } else {
+    const c = importCounts(), types = imp.typeCols;
+    const pill = {ok:['ok','Will update'], same:['same','No changes'], notfound:['bad','Not found'], scope:['warn','Outside scope'], dup:['warn','Duplicate'], invalid:['bad','Invalid']};
+    const rowsHtml = imp.rows.map(r=>{
+      const pl = pill[r.status];
+      const cells = types.map(t=>{
+        const x = r.cells[t];
+        if(!x) return '<td class="imp-dim">\u2014</td>';
+        if(r.status!=='ok') return '<td class="imp-dim">'+x.from+'</td>';
+        if(x.blank) return '<td class="imp-dim">'+x.from+'</td>';
+        return x.to!==x.from ? '<td><span class="imp-old">'+x.from+'</span><span class="imp-new">'+x.to+'</span></td>' : '<td class="imp-dim">'+x.from+'</td>';
+      }).join('');
+      return '<tr><td><b>'+(r.name||'\u2014')+'</b><span class="imp-dim"> &middot; row '+r.line+'</span></td>'+
+        '<td><span class="imp-pill '+pl[0]+'">'+pl[1]+'</span>'+(r.reason?'<span class="reason">'+r.reason+'</span>':'')+'</td>'+cells+'</tr>';
+    }).join('');
+    body = '<div class="modal-body">'+
+      '<div class="imp-summary"><span class="imp-chip">'+imp.fileName+'</span>'+
+        '<span class="imp-chip ok">'+c.ok+' will be updated ('+c.cells+' balance'+(c.cells===1?'':'s')+')</span>'+
+        (c.same?'<span class="imp-chip">'+c.same+' unchanged</span>':'')+
+        (c.skipped?'<span class="imp-chip warn">'+c.skipped+' skipped</span>':'')+'</div>'+
+      '<div class="imp-wrap"><table class="imp-table"><thead><tr><th>Employee</th><th>Result</th>'+types.map(t=>'<th>'+t+'</th>').join('')+'</tr></thead><tbody>'+rowsHtml+'</tbody></table></div>'+
+      '<div class="dropzone-hint" style="margin-top:10px">Struck-through values are the current balance; the highlighted value replaces it.</div>'+
+    '</div>';
+    foot = '<div class="modal-foot"><button class="btn btn-ghost" onclick="openImport()">Choose another file</button><span style="flex:1"></span>'+
+      '<button class="btn btn-accent" '+(c.ok?'':'disabled style="opacity:.45;cursor:not-allowed" ')+'onclick="applyImport()">'+(c.ok?'Apply '+c.ok+' update'+(c.ok===1?'':'s'):'Nothing to apply')+'</button></div>';
+  }
+  return '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal modal-xl">'+head+body+foot+'</div></div>';
+}
+
+/* ============================= ADJUST BALANCE ============================= */
+function canAdjustBalance(emp){
+  return state.role!=='employee' && emp.id!==currentUserEmpId() && canFileOnBehalf(emp);
+}
+function openAdjust(empId){ state.modal={type:'adjust', employeeId:empId}; render(); }
+function adjAvail(empId, type){ const b=getBalances(getEmp(empId)).find(x=>x.type===type); return b?b.available:null; }
+function updateAdjustHint(empId){
+  const t=document.getElementById('adj-type').value, h=document.getElementById('adj-hint');
+  const e=document.getElementById('adj-type-error'); if(e) e.remove();
+  h.textContent = t ? 'Current available: '+adjAvail(empId,t)+' day'+(adjAvail(empId,t)===1?'':'s') : '';
+}
+function adjError(id, msg){
+  const old=document.getElementById(id+'-error'); if(old) old.remove();
+  const el=document.getElementById(id); el.classList.add('input-error');
+  el.insertAdjacentHTML('afterend','<div class="field-error" id="'+id+'-error">'+msg+'</div>');
+}
+function submitAdjust(empId){
+  const emp=getEmp(empId); if(!emp||!canAdjustBalance(emp)) return;
+  ['adj-type','adj-delta','adj-reason'].forEach(id=>{ const e=document.getElementById(id+'-error'); if(e) e.remove(); document.getElementById(id).classList.remove('input-error'); });
+  const type=document.getElementById('adj-type').value, rawDelta=document.getElementById('adj-delta').value.trim(), reason=document.getElementById('adj-reason').value.trim();
+  const delta=Number(rawDelta); let ok=true;
+  if(!type){ adjError('adj-type','Select a leave type.'); ok=false; }
+  if(rawDelta===''||!isFinite(delta)||delta===0){ adjError('adj-delta','Enter the number of days to add or subtract, e.g. 2 or -1.'); ok=false; }
+  else if(type){
+    const b=getBalances(emp).find(x=>x.type===type);
+    if(b.accrued+b.adjusted+delta-b.used-b.pending<0){ adjError('adj-delta','Available balance cannot go below zero. '+emp.name+' has '+b.available+' day'+(b.available===1?'':'s')+' available for '+type+'.'); ok=false; }
+  }
+  if(!reason){ adjError('adj-reason','A reason is required for every adjustment.'); ok=false; }
+  if(!ok) return;
+  const before=adjAvail(empId,type);
+  BAL_ADJ[empId]=BAL_ADJ[empId]||{}; BAL_ADJ[empId][type]=(BAL_ADJ[empId][type]||0)+delta;
+  const after=adjAvail(empId,type), by=ROLES[state.role].user;
+  ADJ_LOG.push({empId,type,delta,before,after,reason,by,date:fmtDateShort(TODAY)});
+  NOTIFS.push({id:nextNotifId++, to:empId, reqId:null, kind:'adjusted', read:false, time:'Just now',
+    html:'Your <b>'+type+'</b> leave balance was adjusted by <b>'+(delta>0?'+':'')+delta+'</b> day'+(Math.abs(delta)===1?'':'s')+' by '+by+' (now '+after+' available). Reason: '+reason+'.'});
+  state.modal=null; render(); showToast(type+' balance adjusted by '+(delta>0?'+':'')+delta+' for '+emp.name+'.');
+}
+function renderAdjustModal(m){
+  const emp=getEmp(m.employeeId); if(!emp) return '';
+  return '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    '<div class="modal-head"><div class="modal-title">Adjust leave balance</div>'+
+      '<div class="modal-subtitle">Add or subtract days from the adjusted balance. Available balance cannot go below zero.</div>'+
+      '<span class="modal-close" onclick="closeModal()">'+ic('x',18)+'</span></div>'+
+    '<div class="modal-body">'+
+      '<div class="scope-note">'+ic('info',16)+'<span>Adjusting the leave balance of <b>'+emp.name+'</b> ('+emp.dept+').</span></div>'+
+      '<div class="form-group" style="margin-top:14px"><label class="form-label">Leave type <span style="color:var(--bad)">*</span></label>'+
+        '<select class="form-select" id="adj-type" onchange="updateAdjustHint(\''+emp.id+'\')"><option value="">Select leave type</option>'+LEAVE_TYPES.map(t=>'<option value="'+t+'">'+t+'</option>').join('')+'</select>'+
+        '<div class="adj-hint" id="adj-hint"></div></div>'+
+      '<div class="form-group"><label class="form-label">Adjustment (+/- days) <span style="color:var(--bad)">*</span></label>'+
+        '<input class="form-input" id="adj-delta" type="text" inputmode="decimal" placeholder="e.g. 2 or -1" oninput="this.classList.remove(\'input-error\');const e=document.getElementById(\'adj-delta-error\');if(e)e.remove()"></div>'+
+      '<div class="form-group"><label class="form-label">Reason <span style="color:var(--bad)">*</span></label>'+
+        '<textarea class="form-textarea" id="adj-reason" placeholder="Reason for this adjustment" oninput="this.classList.remove(\'input-error\');const e=document.getElementById(\'adj-reason-error\');if(e)e.remove()"></textarea></div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Cancel</button><button class="btn btn-accent" onclick="submitAdjust(\''+emp.id+'\')">Save adjustment</button></div>'+
+  '</div></div>';
+}
+function adjHistoryHTML(emp){
+  const rows = ADJ_LOG.filter(a=>a.empId===emp.id).slice().reverse();
+  if(!rows.length) return '';
+  return '<div class="adj-hist-title">Adjustment history</div><div class="table-card adj-hist"><table><thead><tr><th>Date</th><th>Leave Type</th><th>Adjustment</th><th>Available</th><th>Reason</th><th>Adjusted by</th></tr></thead><tbody>'+
+    rows.map(a=>'<tr><td>'+a.date+'</td><td>'+a.type+'</td><td class="'+(a.delta>0?'adj-pos':'adj-neg')+'">'+(a.delta>0?'+':'')+a.delta+'</td><td>'+a.before+' \u2192 '+a.after+'</td><td class="reason">'+a.reason+'</td><td>'+a.by+'</td></tr>').join('')+
+    '</tbody></table></div>';
+}
+
+/* ============================= NOTIFICATIONS ============================= */
+const NOTIFS = []; let nextNotifId = 1;
+function teamPersonnelIds(emp, approver){
+  const ids = [];
+  if(emp.dept === ROLES.manager.dept) ids.push(ROLES.manager.empId);        // Manager of the employee's scope
+  if(emp.team === ROLES.supervisor.team) ids.push(ROLES.supervisor.empId);  // Supervisor of the employee's team
+  if(approver && approver.indexOf('Super Admin')>-1) ids.push(ROLES.superadmin.empId); // Super Admin only when selected as approver
+  return ids;
+}
+function pushNotif(to, req, kind, html, time){
+  if(NOTIFS.some(n=>n.to===to && n.reqId===req.id && n.kind===kind)) return;  // never duplicate the same event
+  NOTIFS.push({id:nextNotifId++, to:to, reqId:req.id, kind:kind, html:html, time:time||'Just now', read:false});
+}
+function notifyEvent(kind, req, actorId, time){
+  const emp = getEmp(req.employeeId), actor = actorId ? getEmp(actorId) : null;
+  const when = fmtDates(req), type = '<b>'+req.leaveType+'</b>';
+  const toTeam = (html)=> teamPersonnelIds(emp, req.approver).filter(id=>id!==actorId && id!==emp.id).forEach(id=>pushNotif(id, req, kind, html, time));
+  if(kind==='filed'){
+    toTeam('<b>'+emp.name+'</b> filed a '+type+' request for '+when+'. Status: Pending.');
+    if(actor && actor.id!==emp.id) pushNotif(emp.id, req, kind, 'A '+type+' request for '+when+' was filed on your behalf by <b>'+actor.name+'</b>. Status: Pending.', time);
+  } else if(kind==='approved'){
+    if(!actor || actor.id!==emp.id) pushNotif(emp.id, req, kind, 'Your '+type+' request for '+when+' was <b>approved</b>. Status: Approved.', time);
+  } else if(kind==='rejected'){
+    if(!actor || actor.id!==emp.id) pushNotif(emp.id, req, kind, 'Your '+type+' request for '+when+' was <b>rejected</b>. Reason: '+req.rejectReason+'. Status: Rejected.', time);
+  } else if(kind==='cancelled'){
+    if(actor && actor.id!==emp.id) pushNotif(emp.id, req, kind, 'Your '+type+' request for '+when+' was <b>cancelled</b> by '+actor.name+'. Reason: '+req.cancelReason+'. Status: Cancelled.', time);
+    else toTeam('<b>'+emp.name+'</b> cancelled their '+type+' request for '+when+'. Status: Cancelled.');
+  }
+}
+function userNotifs(){ return NOTIFS.filter(n=>n.to===currentUserEmpId()).sort((a,b)=>b.id-a.id); }
+function openNotif(id){
+  const n = NOTIFS.find(x=>x.id===id); if(!n) return;
+  n.read = true; state.notifOpen = false;
+  const r = REQUESTS.find(x=>x.id===n.reqId);
+  if(r) state.modal = {type:(r.status==='Pending' && canApproveReject(r)) ? 'review' : 'view', requestId:r.id};
+  render();
+}
+function markAllNotifsRead(e){ e.stopPropagation(); NOTIFS.forEach(n=>{ if(n.to===currentUserEmpId()) n.read=true; }); render(); }
+/* Demo data: approvers, a cancellation reason, and notifications for the existing sample requests */
+function seedDemoData(){
+  REQUESTS.forEach(r=>{
+    if(!r.approver) r.approver = getApprovers(getEmp(r.employeeId))[0];
+    if(r.status==='Cancelled' && !r.cancelReason){ r.cancelReason='Plans changed; will refile for a later date.'; r.cancelledBy=getEmp(r.employeeId).name; }
+  });
+  [...REQUESTS].sort((a,b)=>a.filed.localeCompare(b.filed)).forEach(r=>{
+    const t = fmtDateShort(r.filed);
+    if(r.status==='Pending') notifyEvent('filed', r, r.employeeId, t);
+    else if(r.status==='Approved') notifyEvent('approved', r, null, t);
+    else if(r.status==='Rejected') notifyEvent('rejected', r, null, t);
+    else if(r.status==='Cancelled') notifyEvent('cancelled', r, r.employeeId, t);
+  });
+}
+
+function approveRequest(reqId){
+  const r = REQUESTS.find(x=>x.id===reqId);
+  if(r){ r.status='Approved'; notifyEvent('approved', r, currentUserEmpId()); showToast('Leave request approved.'); }
+  closeModal();
+}
+function rejectRequest(reqId){
+  const reasonEl = document.getElementById('reject-reason');
+  const reason = reasonEl ? reasonEl.value.trim() : '';
+  if(!reason){
+    if(reasonEl){
+      reasonEl.classList.add('input-error');
+      reasonEl.focus();
+      if(!document.getElementById('reject-reason-error')){
+        const errEl = document.createElement('div');
+        errEl.id = 'reject-reason-error';
+        errEl.style.cssText = 'color:var(--bad);font-size:11.5px;margin-top:6px;font-weight:600;';
+        errEl.textContent = 'A reason is required to reject this request.';
+        reasonEl.insertAdjacentElement('afterend', errEl);
+      }
+    }
+    return;
+  }
+  const r = REQUESTS.find(x=>x.id===reqId);
+  if(r){ r.status='Rejected'; r.rejectReason=reason; notifyEvent('rejected', r, currentUserEmpId()); showToast('Leave request rejected.'); }
+  closeModal();
+}
+function cancelRequest(reqId){ state.modal={type:'cancel', requestId:reqId}; render(); }
+function confirmCancel(reqId){
+  const el = document.getElementById('cancel-reason');
+  const reason = el ? el.value.trim() : '';
+  if(!reason){
+    if(el){
+      el.classList.add('input-error'); el.focus();
+      if(!document.getElementById('cancel-reason-error')){
+        const e = document.createElement('div'); e.id='cancel-reason-error'; e.className='field-error';
+        e.textContent = 'A reason is required to cancel this request.';
+        el.insertAdjacentElement('afterend', e);
+      }
+    }
+    return;
+  }
+  const r = REQUESTS.find(x=>x.id===reqId);
+  if(r){
+    r.status='Cancelled'; r.cancelReason=reason; r.cancelledBy=ROLES[state.role].user;
+    notifyEvent('cancelled', r, currentUserEmpId());
+    showToast('Leave request cancelled.');
+  }
+  closeModal();
+}
+function renderCancelModal(m){
+  const req = REQUESTS.find(r=>r.id===m.requestId); if(!req) return '';
+  const emp = getEmp(req.employeeId);
+  return '<div class="modal-overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'+
+    '<div class="modal-head"><div class="modal-title">Cancel Leave Request</div><span class="modal-close" onclick="closeModal()">'+ic('x',18)+'</span></div>'+
+    '<div class="modal-body">'+
+      '<div class="scope-note">'+ic('info',16)+'<span>'+emp.name+'\u2019s '+req.leaveType+' request for '+fmtDates(req)+' will be marked as Cancelled.</span></div>'+
+      '<div class="form-group" style="margin-top:14px"><label class="form-label">Reason for cancellation <span style="color:var(--bad)">*</span></label>'+
+        '<textarea class="form-textarea" id="cancel-reason" placeholder="Explain why this request is being cancelled..." oninput="this.classList.remove(\'input-error\');const e=document.getElementById(\'cancel-reason-error\');if(e)e.remove()"></textarea></div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal()">Keep request</button>'+
+      '<button class="btn" style="background:var(--bad-dim);color:var(--bad)" onclick="confirmCancel(\''+req.id+'\')">Confirm cancellation</button></div>'+
+  '</div></div>';
+}
+function getApprovers(emp){
+  const list = [];
+  if(emp.dept === ROLES.manager.dept) list.push(ROLES.manager.user+' (Manager)');
+  if(emp.team === ROLES.supervisor.team) list.push(ROLES.supervisor.user+' (Supervisor)');
+  list.push(ROLES.superadmin.user+' (Super Admin)');
+  return list;
+}
+function availableBoxHTML(emp, leaveType){
+  const b = getBalances(emp).find(x=>x.type===leaveType);
+  if(!b) return '';
+  if(leaveType==='Vacation' || leaveType==='Sick'){
+    return b.accrued+' accrued &middot; '+b.used+' used &middot; <b>'+b.available+' available</b>';
+  }
+  return '<b>'+b.available+' available</b>';
+}
+function balanceCellHTML(b, leaveType){
+  if(!b) return '';
+  if(leaveType==='Vacation' || leaveType==='Sick'){
+    const pct = b.accrued>0 ? Math.min(100, Math.round((b.used/b.accrued)*100)) : 0;
+    return '<div class="mini-progress-wrap mini-progress-wrap-cell">'+
+      '<div style="font-weight:700">'+b.available+'</div>'+
+      '<div class="mini-progress-track"><div class="mini-progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="mini-progress-tooltip">'+b.used+' used &middot; '+b.accrued+' accrued</div>'+
+    '</div>';
+  }
+  return '<span style="font-weight:600">'+b.available+'</span>';
+}
+function updateFileLeaveAvailable(empId){
+  const emp = getEmp(empId);
+  const type = document.getElementById('fl-type').value;
+  const box = document.getElementById('fl-available');
+  if(box) box.innerHTML = availableBoxHTML(emp, type);
+  flBalanceCheck(empId);
+}
+/* Blocks over-balance requests: shows an inline message while the form is open and is re-checked on submit */
+function flBalanceCheck(empId){
+  const el = document.getElementById('fl-bal-error'), typeEl = document.getElementById('fl-type');
+  if(!el || !typeEl) return true;
+  const type = typeEl.value;
+  const b = getBalances(getEmp(empId)).find(x=>x.type===type);
+  const avail = b ? b.available : 0;
+  const days = summarizeDates(fileDates).leave.length;
+  const over = days > avail;
+  el.style.display = over ? 'block' : 'none';
+  el.textContent = over ? 'This request is for '+days+' leave day'+(days===1?'':'s')+' but only '+avail+' '+type+' day'+(avail===1?' is':'s are')+' available. Reduce the number of days or choose another leave type.' : '';
+  return !over;
+}
+function handleFileLeaveAttachment(fileOrInput){
+  const file = fileOrInput.files ? fileOrInput.files[0] : fileOrInput;
+  const el = document.getElementById('fl-filename');
+  if(file && el) el.textContent = 'Selected: '+file.name;
+}
+function flDateError(msg){
+  const el = document.getElementById('fl-summary');
+  if(el) el.innerHTML = '<span style="color:var(--bad);font-weight:600">'+msg+'</span>';
+}
+function removeFileDate(d){ fileDates = fileDates.filter(x=>x!==d); updateFileDatesUI(); }
+function updateFileDatesUI(){
+  const s = summarizeDates(fileDates); fileDates = s.all;
+  const chips = document.getElementById('fl-chips'), sum = document.getElementById('fl-summary');
+  if(!chips || !sum) return;
+  chips.classList.remove('input-error');
+  chips.innerHTML = s.all.map(d=>{
+    const lbl = excludedLabel(d);
+    return '<span class="chip'+(lbl?' chip-holiday':'')+'">'+fmtDateShort(d)+(lbl?' \u00b7 '+lbl+' (not counted)':'')+'<span class="chip-x" onclick="removeFileDate(\''+d+'\')">\u00d7</span></span>';
+  }).join('');
+  const pl = (n,w)=>n+' '+w+(n===1?'':'s');
+  sum.innerHTML = s.all.length===0 ? 'No dates selected yet.' :
+    '<b>'+pl(s.leave.length,'leave day')+'</b> &middot; '+pl(s.holidays.length,'holiday')+' skipped &middot; '+pl(s.all.length,'date')+' selected';
+  if(state.modal && state.modal.type==='file') flBalanceCheck(state.modal.employeeId);
+}
+function submitFileLeave(empId){
+  const type = document.getElementById('fl-type').value;
+  const approver = document.getElementById('fl-approver') ? document.getElementById('fl-approver').value : '';
+  const reason = document.getElementById('fl-reason') ? document.getElementById('fl-reason').value.trim() : '';
+  const s = summarizeDates(fileDates);
+  if(s.all.length===0){ document.getElementById('fl-chips').classList.add('input-error'); flDateError('Select at least one date.'); return; }
+  if(s.leave.length===0){ flDateError('All selected dates are holidays. Select at least one working day.'); return; }
+  let blocked = false;
+  if(!approver){
+    const sel = document.getElementById('fl-approver'); if(sel) sel.classList.add('input-error');
+    const er = document.getElementById('fl-approver-error'); if(er){ er.textContent = 'Select an approver before submitting.'; er.style.display = 'block'; }
+    blocked = true;
+  }
+  if(!flBalanceCheck(empId)) blocked = true;
+  if(blocked){
+    const first = document.querySelector('#fl-bal-error:not([style*="none"]), #fl-approver-error:not([style*="none"])');
+    if(first) first.scrollIntoView({block:'center', behavior:'smooth'});
+    return;
+  }
+  REQUESTS.unshift({
+    id:'r'+(nextReqId++), employeeId:empId, leaveType:type, start:s.leave[0], end:s.leave[s.leave.length-1],
+    dates:s.leave, skipped:s.holidays, days:s.leave.length,
+    filed:TODAY, status:'Pending', approver:approver, reason:reason
+  });
+  notifyEvent('filed', REQUESTS[0], currentUserEmpId());
+  closeModal();
+  showToast('Leave request filed successfully.');
+}
+
+/* ============================= RENDER: SIDEBAR ============================= */
+function renderSidebar(){
+  const nav = (icon,label,active,locked)=>{
+    return '<div class="nav-item'+(active?' active':'')+'">'+ic(icon,17)+'<span>'+label+'</span>'+(locked?'<span class="lock">'+ic('lock',13)+'</span>':'')+'</div>';
+  };
+  return '<div class="sidebar">'+
+    '<div class="brand"><div class="brand-icon">'+ic('grid',16)+'</div><div class="brand-name">T201</div></div>'+
+    '<div class="nav-group-label">OVERVIEW</div>'+
+    nav('grid','Dashboard')+
+    nav('message','Messages')+
+    nav('clock','ND and OT',false,true)+
+    '<div class="nav-group-label">PEOPLE</div>'+
+    nav('users','Employee')+
+    nav('clipboard','Evaluations')+
+    nav('shield','Roles & access')+
+    nav('alert','Pending Elevations')+
+    nav('hourglass','Pending Periods')+
+    nav('leaf','Leaves',true)+
+    nav('calendar','Schedules')+
+    nav('briefcase','Onboarding')+
+    '<div class="nav-group-label">RECORDS</div>'+
+    nav('file','Documents')+
+    nav('activity','Audit log')+
+    nav('wallet','Salary Access Log')+
+    '<div class="sidebar-spacer"></div>'+
+    '</div>';
+}
+
+/* ============================= RENDER: TOPBAR ============================= */
+function renderTopbar(){
+  const role = currentRoleCfg();
+  const roleMenu = ROLE_ORDER.map(key=>{
+    const r = ROLES[key];
+    const sel = key===state.role;
+    return '<div class="role-opt'+(sel?' selected':'')+'" onclick="setRole(\''+key+'\')">'+
+      '<div class="role-opt-icon">'+ic(r.icon,15)+'</div>'+
+      '<div class="role-opt-main"><div class="role-opt-title">'+r.label+'</div><div class="role-opt-sub">'+r.sub+'</div></div>'+
+      (sel?'<div class="role-opt-check">'+ic('check',16)+'</div>':'')+
+      '</div>';
+  }).join('');
+
+  const myNotifs = userNotifs(), unread = myNotifs.filter(n=>!n.read).length;
+  const notifHtml = myNotifs.length ? myNotifs.slice(0,15).map(n=>'<div class="notif-item" onclick="openNotif('+n.id+')"><div class="notif-dot" style="'+(n.read?'visibility:hidden':'')+'"></div><div><div class="notif-text">'+n.html+'</div><div class="notif-time">'+n.time+'</div></div></div>').join('') : '<div class="notif-empty">No notifications yet.</div>';
+
+  return '<div class="topbar" onclick="closeMenus()">'+
+    '<button class="icon-btn" onclick="event.stopPropagation()">'+ic('search',17)+'</button>'+
+    '<button class="icon-btn" onclick="event.stopPropagation()">'+ic('message',17)+'</button>'+
+    '<div style="position:relative" onclick="event.stopPropagation()">'+
+      '<button class="icon-btn" onclick="toggleNotif(event)">'+ic('bell',17)+(unread?'<span class="badge-dot">'+(unread>9?'9+':unread)+'</span>':'')+'</button>'+
+      (state.notifOpen ? '<div class="notif-panel"><div class="notif-head">Notifications'+(unread?'<span class="notif-markall" onclick="markAllNotifsRead(event)">Mark all as read</span>':'')+'</div>'+notifHtml+'</div>' : '')+
+    '</div>'+
+    '<button class="icon-btn" onclick="event.stopPropagation();toggleTheme()">'+ic(state.theme==='dark'?'moon':'sun',17)+'</button>'+
+    '<div class="role-pill-wrap" onclick="event.stopPropagation()">'+
+      '<button class="role-pill" onclick="toggleRoleMenu(event)">'+
+        '<span class="role-avatar">'+ic(role.icon,13)+'</span>'+
+        '<span><span class="role-tag">Viewing as</span><span class="role-value">'+role.label+'</span></span>'+
+        ic('chevronDown',15)+
+      '</button>'+
+      (state.roleMenuOpen ? '<div class="role-menu"><div class="role-menu-label">SWITCH ROLE</div>'+roleMenu+'</div>' : '')+
+    '</div>'+
+    '<div class="avatar" style="background:'+accentBg()+'">'+initials(role.user)+'</div>'+
+    '</div>';
+}
+function accentBg(){ return getComputedStyle ? '#2fd7a8' : '#2fd7a8'; }
+
+/* ============================= RENDER: LEAVE MANAGEMENT (admin roles) ============================= */
+function renderHistoryTable(reqsList, emptyMsg){
+  if(reqsList.length===0){
+    return '<div class="table-card"><div class="empty-state">'+ic('leaf',34)+'<div class="empty-title">No leave requests yet</div>'+(emptyMsg?'<div>'+emptyMsg+'</div>':'')+'</div></div>';
+  }
+  return '<div class="table-card"><table><thead><tr><th>Leave Type</th><th>Leave Date</th><th>Days</th><th>Date Filed</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
+    reqsList.map(r=>{
+      const action = r.status==='Pending' ? '<span class="link-btn" onclick="openReview(\''+r.id+'\')">Review</span>' : '<span class="link-btn" onclick="openView(\''+r.id+'\')">View</span>';
+      return '<tr><td style="font-weight:600">'+r.leaveType+'</td><td>'+fmtDates(r)+'</td><td>'+r.days+'</td><td>'+fmtDateShort(r.filed)+'</td><td>'+badge(r.status)+'</td><td>'+action+'</td></tr>';
+    }).join('')+
+    '</tbody></table></div>';
+}
+function scopeLabel(){
+  if(state.role==='superadmin') return 'Oversee leave requests across the entire organization.';
+  if(state.role==='manager') return 'Oversee leave requests within the '+ROLES.manager.dept+' department.';
+  if(state.role==='supervisor') return 'Oversee leave requests for '+ROLES.supervisor.team+'.';
+  return '';
+}
+/* ignoreStatus=true returns the list matching every filter EXCEPT Status \u2014 used for the summary widget counts */
+function filteredRequests(ignoreStatus){
+  let list = getScopedRequests();
+  if(!ignoreStatus && state.statusFilter!=='all') list = list.filter(r=>r.status===state.statusFilter);
+  if(state.typeFilter!=='all') list = list.filter(r=>r.leaveType===state.typeFilter);
+  if(state.deptFilter!=='all') list = list.filter(r=> getEmp(r.employeeId).dept===state.deptFilter);
+  if(state.search.trim()){
+    const q = state.search.trim().toLowerCase();
+    list = list.filter(r=> getEmp(r.employeeId).name.toLowerCase().includes(q));
+  }
+  if(state.leaveDateFilter){
+    list = list.filter(r=> r.dates.includes(state.leaveDateFilter));
+  }
+  if(state.filedRange.from){
+    const ff=state.filedRange.from, ft=state.filedRange.to;
+    list = list.filter(r=> r.filed>=ff && r.filed<=ft);
+  }
+  if(state.leaveRange.from){
+    const f=state.leaveRange.from, t=state.leaveRange.to;
+    list = list.filter(r=> r.dates.some(d=> d>=f && d<=t));
+  }
+  return list.slice().sort((a,b)=> b.filed.localeCompare(a.filed));
+}
+function renderScopeBalanceTab(){
+  const isSA = state.role==='superadmin';
+  const q = state.balSearch.trim().toLowerCase();
+  const emps = getScopedEmployees()
+    .filter(e=> (!q || e.name.toLowerCase().includes(q)) && (!isSA || state.balDept==='all' || e.dept===state.balDept))
+    .sort((a,b)=>a.name.localeCompare(b.name));
+
+  const filterBar = '<div class="filter-bar">'+
+    '<div class="search-box">'+ic('search',15)+'<input placeholder="Search by employee name..." value="'+state.balSearch+'" oninput="setBalSearch(this.value)"/></div>'+
+    (isSA ? deptSelect(state.balDept,'setBalDept') : '')+
+    '<span class="clear-btn" onclick="clearBalFilters()">Clear filters</span>'+
+    '<button class="btn btn-ghost import-btn" onclick="openImport()">'+ic('upload',15)+'Import balances</button></div>';
+  const syncNote = '<div class="sync-note">'+ic('info',16)+'<span>'+(balSync
+    ? 'Balances last synced from <b>'+balSync.file+'</b> on '+balSync.date+' &middot; '+balSync.employees+' employee'+(balSync.employees===1?'':'s')+' updated by '+balSync.by+'.'
+    : 'Balances are not synced automatically. Import a CSV or Excel file to update the remaining balance of employees.')+'</span></div>';
+
+  if(emps.length===0){
+    return syncNote+filterBar+'<div class="table-card"><div class="empty-state">'+ic('leaf',34)+'<div class="empty-title">No employees found</div><div>Try adjusting or clearing your filters.</div></div></div>';
+  }
+
+  let grand = {Vacation:0,Sick:0,Emergency:0,Bereavement:0,Birthday:0,total:0};
+  const rows = emps.map(emp=>{
+    const balances = getBalances(emp);
+    const byType = {};
+    balances.forEach(b=>{ byType[b.type]=b; grand[b.type]+=b.available; });
+    const total = balances.reduce((s,b)=>s+b.available,0);
+    grand.total += total;
+    return '<tr>'+
+      '<td class="emp-cell" onclick="goToEmployee(\''+emp.id+'\')"><div class="name-row"><div class="mini-avatar" style="background:'+emp.color+'">'+initials(emp.name)+'</div>'+
+      '<div><div class="emp-name">'+emp.name+'</div></div></div></td>'+
+      (isSA?'<td>'+emp.dept+'</td>':'')+
+      LEAVE_TYPES.map(t=>'<td>'+balanceCellHTML(byType[t], t)+'</td>').join('')+
+      '<td style="color:var(--accent);font-weight:700">'+total+'</td></tr>';
+  }).join('');
+
+  return syncNote+filterBar+'<div class="table-card"><table><thead><tr>'+
+    '<th>Employee</th>'+(isSA?'<th>Department</th>':'')+LEAVE_TYPES.map(t=>'<th>'+t+'</th>').join('')+'<th>Total Available</th>'+
+    '</tr></thead><tbody>'+rows+
+    '<tr class="total-row"><td>Total</td>'+(isSA?'<td></td>':'')+LEAVE_TYPES.map(t=>'<td>'+grand[t]+'</td>').join('')+'<td style="color:var(--accent)">'+grand.total+'</td></tr>'+
+    '</tbody></table><div class="balance-note">'+(isSA?'Available leave balance for every employee in the organization':'Available leave balance for every employee within your scope')+', summed across all leave types. Totals reflect the current filters. Hover the bar under Vacation or Sick to see accrued vs. used.</div></div>';
+}
+function renderBalDrawer(){
+  if(!state.balDrawer) return '';
+  const inProfile = state.balDrawer==='emp';
+  const meEmp = getEmp(currentUserEmpId());
+  const profEmp = inProfile ? getEmp(state.selectedEmployee) : null;
+  const sub = inProfile ? profEmp.name+'\u2019s leave balance by leave type.' : 'Your own leave balance by leave type.';
+  const body = renderBalanceTable(getBalances(inProfile ? profEmp : meEmp));
+  return '<div class="drawer-overlay'+(state.drawerAnim?' anim':'')+'" onclick="if(event.target===this)closeBalDrawer()">'+
+    '<aside class="drawer">'+
+      '<div class="drawer-head"><div class="drawer-title">'+(inProfile?'Leave balance':'My balance')+'</div><div class="drawer-sub">'+sub+'</div>'+
+        '<span class="drawer-close" onclick="closeBalDrawer()">'+ic('x',18)+'</span></div>'+
+      '<div class="drawer-body">'+body+'</div>'+
+    '</aside></div>';
+}
+function balButtonHTML(defaultView, label){
+  return '<button class="btn btn-ghost" onclick="openBalDrawer(\''+defaultView+'\')">'+ic('wallet',15)+(label||'Leave balance')+'</button>';
+}
+function renderLeaveManagement(){
+  const isSA = state.role==='superadmin';
+  const scoped = getScopedRequests();
+  /* Widget counts follow the active filters (search, type, department, dates); only the Status filter is left out so every widget stays visible */
+  const filteredNoStatus = filteredRequests(true);
+  const counts = {
+    all: filteredNoStatus.length,
+    Pending: filteredNoStatus.filter(r=>r.status==='Pending').length,
+    Approved: filteredNoStatus.filter(r=>r.status==='Approved').length,
+    Rejected: filteredNoStatus.filter(r=>r.status==='Rejected').length,
+    Cancelled: filteredNoStatus.filter(r=>r.status==='Cancelled').length,
+  };
+  const rows = filteredRequests();
+  const widgets = [
+    {key:'all',       cls:'',            label:'ALL',       value:counts.all,       note:'Total requests'},
+    {key:'Pending',   cls:'w-pending',   label:'PENDING',   value:counts.Pending,   note:'Awaiting review'},
+    {key:'Approved',  cls:'w-approved',  label:'APPROVED',  value:counts.Approved,  note:'Processed & approved'},
+    {key:'Rejected',  cls:'w-rejected',  label:'REJECTED',  value:counts.Rejected,  note:'Processed & rejected'},
+    {key:'Cancelled', cls:'w-cancelled', label:'CANCELLED', value:counts.Cancelled, note:'Cancelled by employee'},
+  ];
+  const widgetsHtml = widgets.map(w=>{
+    const sel = state.statusFilter === w.key;
+    return '<div class="widget '+w.cls+(sel?' selected':'')+'" onclick="setWidgetFilter(\''+w.key+'\')">'+
+      '<div class="widget-label">'+w.label+'</div>'+
+      '<div class="widget-value">'+w.value+'</div><div class="widget-note">'+w.note+'</div></div>';
+  }).join('');
+
+  const typeOptions = ['all'].concat(LEAVE_TYPES).map(t=>'<option value="'+t+'"'+(state.typeFilter===t?' selected':'')+'>'+(t==='all'?'All types':t)+'</option>').join('');
+
+  let tableBody;
+  if(rows.length===0){
+    tableBody = '<div class="empty-state">'+ic('leaf',34)+'<div class="empty-title">No leave requests found</div><div>Try adjusting or clearing your filters.</div></div>';
+  } else {
+    tableBody = '<table><thead><tr>'+
+      '<th>Employee</th>'+(isSA?'<th>Department</th>':'')+'<th>Leave Type</th><th>Leave Date</th><th>Days</th><th>Date Filed</th><th>Status</th><th>Action</th>'+
+      '</tr></thead><tbody>'+
+      rows.map(r=>{
+        const emp = getEmp(r.employeeId);
+        const openable = canOpenProfile(emp);
+        let actionHtml;
+        if(r.status==='Pending'){
+          actionHtml = '<span class="link-btn" onclick="openReview(\''+r.id+'\')">Review</span>';
+        } else {
+          actionHtml = '<span class="link-btn" onclick="openView(\''+r.id+'\')">View</span>';
+        }
+        return '<tr>'+
+          '<td class="emp-cell" '+(openable?'onclick="goToEmployee(\''+emp.id+'\')"':'')+'>'+
+            '<div class="name-row"><div class="mini-avatar" style="background:'+emp.color+'">'+initials(emp.name)+'</div>'+
+            '<div><div class="emp-name">'+emp.name+'</div></div></div></td>'+
+          (isSA?'<td>'+emp.dept+'</td>':'')+
+          '<td>'+r.leaveType+'</td>'+
+          '<td>'+fmtDates(r)+'</td>'+
+          '<td>'+r.days+'</td>'+
+          '<td>'+fmtDateShort(r.filed)+'</td>'+
+          '<td>'+badge(r.status)+'</td>'+
+          '<td>'+actionHtml+'</td>'+
+          '</tr>';
+      }).join('') +
+      '</tbody></table>'+
+      '<div class="table-foot"><span>Showing 1\u2013'+rows.length+' of '+rows.length+'</span>'+
+      '<div class="foot-controls"><button class="page-btn" disabled>'+ic('arrowLeft',13)+'</button><span>Page 1</span><button class="page-btn" disabled style="transform:rotate(180deg)">'+ic('arrowLeft',13)+'</button></div></div>';
+  }
+
+  const requestsTabContent = '<div class="widgets">'+widgetsHtml+'</div>'+
+    '<div class="filter-bar">'+
+      '<div class="search-box">'+ic('search',15)+'<input placeholder="Search by employee name..." value="'+state.search+'" oninput="setSearch(this.value)"/></div>'+
+      '<select class="filter-select" onchange="setWidgetFilter(this.value)">'+
+        '<option value="all"'+(state.statusFilter==='all'?' selected':'')+'>All statuses</option>'+
+        '<option value="Pending"'+(state.statusFilter==='Pending'?' selected':'')+'>Pending</option>'+
+        '<option value="Approved"'+(state.statusFilter==='Approved'?' selected':'')+'>Approved</option>'+
+        '<option value="Rejected"'+(state.statusFilter==='Rejected'?' selected':'')+'>Rejected</option>'+
+        '<option value="Cancelled"'+(state.statusFilter==='Cancelled'?' selected':'')+'>Cancelled</option>'+
+      '</select>'+
+      '<select class="filter-select" onchange="setTypeFilter(this.value)">'+typeOptions+'</select>'+
+      (isSA?deptSelect(state.deptFilter,'setDeptFilter'):'')+rangeField('Leave Dates','leave','Filters by leave dates')+rangeField('Date Filed','filed','Filters by date filed')+
+      '<span class="clear-btn" onclick="clearFilters()">Clear filters</span>'+
+    '</div>'+
+    '<div class="table-card">'+tableBody+'</div>';
+
+  const meEmp = getEmp(currentUserEmpId());
+  const myReqsList = REQUESTS.filter(r=>r.employeeId===meEmp.id).slice().sort((a,b)=>b.filed.localeCompare(a.filed));
+
+  let tabContent;
+  if(state.leaveMgmtTab==='requests') tabContent = requestsTabContent;
+  else if(state.leaveMgmtTab==='balance') tabContent = renderScopeBalanceTab();
+  else tabContent = renderHistoryTable(myReqsList, 'File your first leave request to see it here.');
+
+  return '<div class="page-head">'+
+      '<div><h1 class="page-title">Leave Management</h1><p class="page-sub">'+scopeLabel()+'</p></div>'+
+      '<div class="head-actions">'+balButtonHTML('my','My balance')+'<button class="btn btn-accent" onclick="openFile(\''+meEmp.id+'\')">'+ic('plus',15)+'File leave</button></div>'+
+    '</div>'+
+    '<div class="tabbar">'+
+      '<div class="tab'+(state.leaveMgmtTab==='requests'?' active':'')+'" onclick="setLeaveMgmtTab(\'requests\')">'+ic('clipboard',15)+(isSA?'Leave Requests':'Team Requests')+'<span class="tab-count">'+scoped.length+'</span></div>'+
+      '<div class="tab'+(state.leaveMgmtTab==='balance'?' active':'')+'" onclick="setLeaveMgmtTab(\'balance\')">'+ic('wallet',15)+(isSA?'Employees Balance':'Team Balance')+'<span class="tab-count">'+getScopedEmployees().length+'</span></div>'+
+      '<div class="tab'+(state.leaveMgmtTab==='myRequests'?' active':'')+'" onclick="setLeaveMgmtTab(\'myRequests\')">'+ic('file',15)+'My Requests<span class="tab-count">'+myReqsList.length+'</span></div>'+
+    '</div>'+
+    tabContent;
+}
+
+/* ============================= RENDER: MY LEAVE (employee) ============================= */
+function renderMyLeave(){
+  const emp = getEmp(ROLES.employee.empId);
+  const balances = getBalances(emp);
+  const myReqs = REQUESTS.filter(r=>r.employeeId===emp.id).slice().sort((a,b)=>b.filed.localeCompare(a.filed));
+
+  const balanceTable = renderBalanceTable(balances);
+
+  const historyTable = renderHistoryTable(myReqs, 'File your first leave request to see it here.');
+
+  return '<div class="page-head">'+
+      '<div><h1 class="page-title">Leave</h1><p class="page-sub">Your leave requests.</p></div>'+
+      '<div class="head-actions">'+balButtonHTML('my','My balance')+'<button class="btn btn-accent" onclick="openFile(\''+emp.id+'\')">'+ic('plus',15)+'File leave</button></div>'+
+    '</div>'+
+    historyTable;
+}
+
+/* ============================= RENDER: EMPLOYEE PROFILE ============================= */
+function renderEmployeeProfile(){
+  const emp = getEmp(state.selectedEmployee);
+  if(!emp) { state.view='leaveManagement'; return renderLeaveManagement(); }
+  const balances = getBalances(emp);
+  const empReqs = REQUESTS.filter(r=>r.employeeId===emp.id).slice().sort((a,b)=>b.filed.localeCompare(a.filed));
+  const showFile = canFileOnBehalf(emp);
+
+  const balanceTable = renderBalanceTable(balances) + adjHistoryHTML(emp);
+
+  const historyTable = renderHistoryTable(empReqs);
+
+  return '<div class="crumb"><span class="crumb-link" onclick="goToLeaveManagement()">Leave Management</span> &nbsp;\u203a&nbsp; <span>'+emp.name+'</span></div>'+
+    '<div class="profile-card">'+
+      '<div class="profile-top">'+
+        '<div class="profile-avatar" style="background:'+emp.color+'">'+initials(emp.name)+'</div>'+
+        '<div><div class="profile-name">'+emp.name+'<span class="status-chip'+(emp.status==='Regular'?' regular':'')+'">'+emp.status+'</span></div>'+
+        '<div class="profile-title">'+emp.title+' \u00b7 '+emp.dept+'</div></div>'+
+      '</div>'+
+      '<div class="profile-tabbar">'+
+        '<div class="ptab inert">Profile</div><div class="ptab inert">Personal</div><div class="ptab inert">Employment</div>'+
+        '<div class="ptab inert">Documents</div><div class="ptab active">Leave</div><div class="ptab inert">OT / ND</div>'+
+        '<div class="ptab inert">Evaluations</div><div class="ptab inert">Audit Trail</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="page-head">'+
+      '<div><h1 class="page-title" style="font-size:18px">Leave</h1><p class="page-sub">'+emp.name+'\u2019s balances and request history.</p></div>'+
+      '<div class="head-actions">'+(canAdjustBalance(emp) ? '<button class="btn btn-ghost" onclick="openAdjust(\''+emp.id+'\')">'+ic('wallet',15)+'Adjust balance</button>' : '')+(showFile ? '<button class="btn btn-accent" onclick="openFile(\''+emp.id+'\')">'+ic('plus',15)+'File leave</button>' : '')+'</div>'+
+    '</div>'+
+    '<div class="subtabs">'+
+      '<div class="subtab'+(state.profileSubTab==='balance'?' active':'')+'" onclick="setProfileSubTab(\'balance\')">Leave Balance</div>'+
+      '<div class="subtab'+(state.profileSubTab==='history'?' active':'')+'" onclick="setProfileSubTab(\'history\')">Leave Requests</div>'+
+    '</div>'+
+    (state.profileSubTab==='balance' ? balanceTable : historyTable);
+}
+
+/* ============================= RENDER: MODALS ============================= */
+function renderModal(){
+  if(!state.modal) return '';
+  const m = state.modal;
+  if(m.type==='cancel') return renderCancelModal(m);
+  if(m.type==='import') return renderImportModal();
+  if(m.type==='adjust') return renderAdjustModal(m);
+
+  if(m.type==='file'){
+    const emp = getEmp(m.employeeId);
+    const onBehalf = emp.id !== currentUserEmpId();
+    const typeOpts = LEAVE_TYPES.map(t=>'<option value="'+t+'">'+t+'</option>').join('');
+    const approvers = getApprovers(emp);
+    const approverOpts = '<option value="">Select approver</option>'+approvers.map(a=>'<option value="'+a+'">'+a+'</option>').join('');
+  return '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'+
+      '<div class="modal modal-wide">'+
+        '<div class="modal-head">'+
+          '<div class="modal-title">File leave</div>'+
+          '<div class="modal-subtitle">Choose a leave type, dates, and approver'+(onBehalf?' — filing for '+emp.name:'')+' — then submit for review.</div>'+
+          '<span class="modal-close" onclick="closeModal()">'+ic('x',18)+'</span>'+
+        '</div>'+
+        '<div class="modal-body">'+
+          (onBehalf ? '<div class="scope-note">'+ic('info',16)+'<span>Filing for <b>'+emp.name+'</b> (' + emp.dept + '). This request will appear in their Leave Requests as Pending.</span></div>' : '')+
+          '<div class="form-row2">'+
+            '<div class="form-group"><label class="form-label">Leave type</label><select class="form-select" id="fl-type" onchange="updateFileLeaveAvailable(\''+emp.id+'\')">'+typeOpts+'</select></div>'+
+            '<div class="form-group"><label class="form-label">Available</label><div class="avail-box" id="fl-available">'+availableBoxHTML(emp, LEAVE_TYPES[0])+'</div></div>'+
+          '</div>'+
+          '<div class="form-group"><label class="form-label">Leave dates</label>'+
+            '<div class="cal-modes"><button type="button" id="fl-mode-multi" class="btn btn-ghost btn-sm active" onclick="flSetMode(\'multi\')">Pick individual dates</button><button type="button" id="fl-mode-range" class="btn btn-ghost btn-sm" onclick="flSetMode(\'range\')">Pick a range</button></div>'+
+            '<div id="fl-cal" class="cal-wrap"></div>'+
+            '<div class="chip-wrap" id="fl-chips"></div><div class="date-summary" id="fl-summary"></div><div class="field-error" id="fl-bal-error" style="display:none"></div>'+
+            '<div class="date-hint" id="fl-hint"></div>'+
+          '</div>'+
+          '<div class="form-group"><label class="form-label">Reason</label><textarea class="form-textarea" id="fl-reason" placeholder="Briefly explain the leave request..."></textarea></div>'+
+          '<div class="form-group"><label class="form-label">Approver <span style="color:var(--bad)">*</span></label><select class="form-select" id="fl-approver" onchange="this.classList.remove(\'input-error\');const e=document.getElementById(\'fl-approver-error\');if(e)e.style.display=\'none\'">'+approverOpts+'</select><div class="field-error" id="fl-approver-error" style="display:none"></div></div>'+
+          '<div class="form-group"><label class="form-label">Attachment (optional)</label>'+
+            '<div class="dropzone" id="fl-dropzone" ondragover="event.preventDefault();this.classList.add(\'drag-over\')" ondragleave="this.classList.remove(\'drag-over\')" ondrop="event.preventDefault();this.classList.remove(\'drag-over\');if(event.dataTransfer.files[0])handleFileLeaveAttachment(event.dataTransfer.files[0])">'+
+              '<div class="dropzone-text">Drag and drop an image, or choose a file</div>'+
+              '<button type="button" class="btn btn-ghost btn-sm" onclick="document.getElementById(\'fl-file\').click()">'+ic('upload',14)+'Choose image</button>'+
+              '<div class="dropzone-hint">JPEG, PNG, GIF, or WebP &middot; max 5MB</div>'+
+              '<div class="dropzone-filename" id="fl-filename"></div>'+
+            '</div>'+
+            '<input type="file" id="fl-file" accept="image/jpeg,image/png,image/gif,image/webp" style="display:none" onchange="handleFileLeaveAttachment(this)">'+
+          '</div>'+
+        '</div>'+
+        '<div class="modal-foot"><button class="btn btn-accent" onclick="submitFileLeave(\''+emp.id+'\')">Submit request</button></div>'+
+      '</div></div>';
+  }
+
+  const req = REQUESTS.find(r=>r.id===m.requestId);
+  if(!req) return '';
+  const emp = getEmp(req.employeeId);
+  const isReview = m.type==='review';
+  const canAct = isReview && canApproveReject(req);
+
+  const canCancel = (req.status==='Pending' || req.status==='Approved') &&
+                    (req.employeeId===currentUserEmpId() || canApproveReject(req));
+  const cancelBtn = canCancel ? '<button class="btn btn-ghost" onclick="cancelRequest(\''+req.id+'\')">Cancel request</button>' : '';
+  let footBtns = '<button class="btn btn-ghost" onclick="closeModal()">Close</button>'+cancelBtn;
+  if(canAct){
+    footBtns = '<button class="btn btn-ghost" onclick="closeModal()">Close</button>'+cancelBtn+
+      '<button class="btn" style="background:var(--bad-dim);color:var(--bad)" onclick="rejectRequest(\''+req.id+'\')">Reject</button>'+
+      '<button class="btn btn-accent" onclick="approveRequest(\''+req.id+'\')">Approve</button>';
+  }
+
+  return '<div class="modal-overlay" onclick="if(event.target===this)closeModal()">'+
+    '<div class="modal">'+
+      '<div class="modal-head"><div class="modal-title">'+(isReview?'Review':'View')+' Leave Request</div><span class="modal-close" onclick="closeModal()">'+ic('x',18)+'</span></div>'+
+      '<div class="modal-body">'+
+        (isReview && !canAct ? '<div class="scope-note">'+ic('info',16)+'<span>Only the employee\'s Manager, designated Supervisor, or a Super Admin can approve or reject this request.</span></div>' : '')+
+        '<div class="detail-row"><span class="detail-label">Employee</span><span class="detail-value">'+emp.name+'</span></div>'+
+        '<div class="detail-row"><span class="detail-label">Leave Type</span><span class="detail-value">'+req.leaveType+'</span></div>'+
+        '<div class="detail-row"><span class="detail-label">Leave Date</span><span class="detail-value">'+fmtDates(req)+'</span></div>'+
+        '<div class="detail-row"><span class="detail-label">Number of Days</span><span class="detail-value">'+req.days+'</span></div>'+
+        (req.skipped && req.skipped.length ? '<div class="detail-row"><span class="detail-label">Excluded (Holiday/Weekend)</span><span class="detail-value">'+req.skipped.map(x=>fmtDateShort(x)+' ('+excludedLabel(x)+')').join('<br>')+'</span></div>' : '')+
+        '<div class="detail-row"><span class="detail-label">Date Filed</span><span class="detail-value">'+fmtDateShort(req.filed)+'</span></div>'+
+        '<div class="detail-row"><span class="detail-label">Approver</span><span class="detail-value">'+(req.approver||'\u2014')+'</span></div>'+
+        (req.reason ? '<div class="detail-row"><span class="detail-label">Reason</span><span class="detail-value">'+req.reason+'</span></div>' : '')+
+        '<div class="detail-row"><span class="detail-label">Status</span><span class="detail-value">'+badge(req.status)+'</span></div>'+
+        (req.status==='Rejected' && req.rejectReason ? '<div class="detail-row"><span class="detail-label">Rejection Reason</span><span class="detail-value">'+req.rejectReason+'</span></div>' : '')+
+        (req.status==='Cancelled' && req.cancelReason ? '<div class="detail-row"><span class="detail-label">Cancellation Reason</span><span class="detail-value">'+req.cancelReason+(req.cancelledBy?'<br><span style="color:var(--text-faint);font-size:12px">Cancelled by '+req.cancelledBy+'</span>':'')+'</span></div>' : '')+
+        (canAct ? '<div class="form-group" style="margin-top:14px"><label class="form-label">Reason for rejection <span style="color:var(--text-faint);font-weight:400">(required if rejecting)</span></label><textarea class="form-textarea" id="reject-reason" placeholder="Explain why this request is being rejected..." oninput="this.classList.remove(\'input-error\');var e=document.getElementById(\'reject-reason-error\');if(e)e.remove();"></textarea></div>' : '')+
+      '</div>'+
+      '<div class="modal-foot">'+footBtns+'</div>'+
+    '</div></div>';
+}
+
+/* ============================= ROOT RENDER ============================= */
+function render(){
+  let body;
+  if(state.view==='employeeProfile') body = renderEmployeeProfile();
+  else if(state.view==='myLeave') body = renderMyLeave();
+  else body = renderLeaveManagement();
+
+  const toastHtml = state.toast ? '<div class="toast">'+ic('check',16)+'<span>'+state.toast+'</span></div>' : '';
+
+  document.getElementById('root').innerHTML =
+    renderSidebar() +
+    '<div class="main">' + renderTopbar() + '<div class="content">' + body + '</div></div>' +
+    renderBalDrawer() + renderModal() + toastHtml;
+  state.drawerAnim = false;
+
+  document.body.className = state.theme==='light' ? 'light' : '';
+}
+
+seedDemoData();
+render();
+</script>
+</body>
+</html>
